@@ -1,4 +1,4 @@
 streamlit
-astrapy
+astrapy==0.6.0
 openai
 python-dotenv
