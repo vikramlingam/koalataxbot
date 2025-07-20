@@ -74,14 +74,14 @@ OPENAI_API_KEY = "sk-your_openai_api_key_here"
 1. Create a file named `.env` in your project root.
 2. Add your API keys:
 
-ASTRA_DB_APPLICATION_TOKEN="AstraCS:your_application_token_here"
-ASTRA_DB_API_ENDPOINT="https://your_api_endpoint_here.datastax.com"
-OPENAI_API_KEY="sk-your_openai_api_key_here"
+- ASTRA_DB_APPLICATION_TOKEN="AstraCS:your_application_token_here"
+- ASTRA_DB_API_ENDPOINT="https://your_api_endpoint_here.datastax.com"
+- OPENAI_API_KEY="sk-your_openai_api_key_here"
 
 
 3. Add `.env` to your `.gitignore` to avoid committing secrets:
 
-.env
+- .env
 
 
 ---
@@ -116,23 +116,8 @@ This will open the application in your default web browser.
 
 ---
 
-## Project Structure
-
-├── .streamlit/ # Streamlit configuration (e.g., secrets.toml)
-│ └── secrets.toml # Streamlit Cloud secrets (never commit)
-├── tax-app.py # Main Streamlit application script
-├── requirements.txt # Python dependencies
-└── README.md # This file
-
-
----
-
 ## Contributing
 
 *Feel free to contribute! Open pull requests for features, bug fixes, or improvements. Please follow standard best practices for code and documentation.*
 
 ---
-
-## License
-
-*Specify your project license here, e.g., MIT, Apache 2.0, etc.*
