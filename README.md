@@ -62,9 +62,9 @@ cd koalataxbot
 2. Navigate to your app's **Settings → Secrets**.
 3. Add your API keys in the following TOML format. Ensure the key names match what your `tax-app.py` expects:
 
-ASTRA_DB_APPLICATION_TOKEN = "AstraCS:your_application_token_here"
-ASTRA_DB_API_ENDPOINT = "https://your_api_endpoint_here.datastax.com"
-OPENAI_API_KEY = "sk-your_openai_api_key_here"
+- ASTRA_DB_APPLICATION_TOKEN = "AstraCS:your_application_token_here"
+- ASTRA_DB_API_ENDPOINT = "https://your_api_endpoint_here.datastax.com"
+- OPENAI_API_KEY = "sk-your_openai_api_key_here"
 
 
 4. Save the secrets and redeploy your app. `app.py` will access these using `st.secrets["KEY_NAME"]`.
@@ -109,7 +109,7 @@ python-dotenv # Only if using .env locally
 
 Once dependencies are installed and API keys are configured, start the Streamlit app:
 
-streamlit run tax-app.py
+- streamlit run tax-app.py
 
 
 This will open the application in your default web browser.
