@@ -18,9 +18,9 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 # Configuration
-ASTRA_DB_APPLICATION_TOKEN = st.secrets("ASTRA_DB_APPLICATION_TOKEN")
-ASTRA_DB_API_ENDPOINT = st.secrets("ASTRA_DB_API_ENDPOINT")
-OPENAI_API_KEY = st.secrets("OPENAI_API_KEY")
+ASTRA_DB_APPLICATION_TOKEN = st.secrets["ASTRA_DB_APPLICATION_TOKEN"]
+ASTRA_DB_API_ENDPOINT = st.secrets["ASTRA_DB_API_ENDPOINT"]
+OPENAI_API_KEY = st.secrets["OPENAI_API_KEY"]
 COLLECTION_NAME = "ato_legal_embeddings_hybrid"
 
 # Streamlit config
