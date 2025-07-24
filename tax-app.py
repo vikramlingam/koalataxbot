@@ -220,7 +220,7 @@ async def get_embedding(text: str, client: AsyncOpenAI) -> List[float]:
     )
     return response.data[0].embedding
 
-def search_documents(collection, query_embedding: List[float], limit: int = 7) -> List[Dict]:
+def search_documents(collection, query_embedding: List[float], limit: int = 9) -> List[Dict]:
     try:
         results = collection.vector_find(
             vector=query_embedding,
@@ -237,7 +237,7 @@ async def enhance_query(client: AsyncOpenAI, query: str) -> str:
     Focus on key ATO terms and concepts. Keep it concise but precise.
 
     Examples:
-    "tax rates" → "individual income tax rates Australia 2024-25"
+    "tax rates" → "individual income tax rates Australia 2025-26"
     "GST" → "goods and services tax registration requirements"
     "super" → "superannuation contribution limits tax deduction"
 
@@ -249,7 +249,7 @@ async def enhance_query(client: AsyncOpenAI, query: str) -> str:
             {"role": "system", "content": enhancement_prompt},
             {"role": "user", "content": query}
         ],
-        max_tokens=100,
+        max_tokens=150,
         temperature=0.1
     )
 
@@ -423,6 +423,7 @@ Format your response as a professional file note with the following sections:
 3. Legislation or ATO Reference: Specific sections of legislation or ATO guidance
 4. Analysis: Your professional interpretation of how the law applies
 5. Conclusion: A clear summary of the answer
+6. IMPORTANT: If the user did not specify any Year in their query, always consider the most latest year information available in the database
 
 IMPORTANT FORMATTING RULES:
 - Each section should have a clear heading
@@ -468,7 +469,7 @@ Confidence Level: [High/Moderate/Low] - [Brief explanation of confidence assessm
     response = await client.chat.completions.create(
         model="gpt-4o",
         messages=messages,
-        max_tokens=1500,
+        max_tokens=1800,
         temperature=0.1
     )
 
@@ -715,7 +716,7 @@ def main():
         col1, col2 = st.columns(2)
 
         with col1:
-            if st.button("📊 Individual tax rates 2024-25", use_container_width=True):
+            if st.button("📊 Individual tax rates 2025-26", use_container_width=True):
                 st.session_state.sample_query = "What are the individual income tax rates for 2025-26?"
                 st.rerun()
             if st.button("🏢 GST registration requirements", use_container_width=True):
