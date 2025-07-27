@@ -33,165 +33,165 @@ st.set_page_config(
 st.markdown("""
 <style>
     .main {
-    max-width: 1000px;
-    margin: 0 auto;
-    padding: 20px;
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+        max-width: 1000px;
+        margin: 0 auto;
+        padding: 20px;
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
     }
-    
+
     /* Chat message styling */
     .chat-message {
-    background-color: #1e1e1e;
-    border-radius: 10px;
-    padding: 15px;
-    margin-bottom: 15px;
-    color: #ffff;
+        background-color: #1e1e1e;
+        border-radius: 10px;
+        padding: 15px;
+        margin-bottom: 15px;
+        color: #ffff;
     }
-    
+
     .user-message {
-    background-color: #1e1e1e;
-    border: 1px solid #383838;
+        background-color: #1e1e1e;
+        border: 1px solid #383838;
     }
-    
+
     .assistant-message {
-    background-color: #1e1e1e;
-    border: 1px solid #383838;
+        background-color: #1e1e1e;
+        border: 1px solid #383838;
     }
-    
+
     /* File note styling */
     .file-note-header {
-    font-size: 1.1rem;
-    font-weight: 600;
-    color: #e0e0e0;
-    margin-bottom: 10px;
-    padding-bottom: 8px;
-    border-bottom: 1px solid #3b82f6;
+        font-size: 1.1rem;
+        font-weight: 600;
+        color: #e0e0e0;
+        margin-bottom: 10px;
+        padding-bottom: 8px;
+        border-bottom: 1px solid #3b82f6;
     }
-    
+
     .section-container {
-    background-color: #1e1e1e;
-    border-radius: 8px;
-    padding: 15px;
-    margin-bottom: 15px;
-    border: 1px solid #383838;
+        background-color: #1e1e1e;
+        border-radius: 8px;
+        padding: 15px;
+        margin-bottom: 15px;
+        border: 1px solid #383838;
     }
-    
+
     .section-header {
-    font-size: 1rem;
-    font-weight: 600;
-    color: #e0e0e0;
-    margin-bottom: 10px;
-    padding-bottom: 5px;
-    border-bottom: 1px solid #3b82f6;
-    display: flex;
-    align-items: center;
-    gap: 8px;
+        font-size: 1rem;
+        font-weight: 600;
+        color: #e0e0e0;
+        margin-bottom: 10px;
+        padding-bottom: 5px;
+        border-bottom: 1px solid #3b82f6;
+        display: flex;
+        align-items: center;
+        gap: 8px;
     }
-    
+
     .content-text {
-    font-size: 0.95rem;
-    line-height: 1.5;
-    color: #e0e0e0;
-    margin: 8px 0;
+        font-size: 0.95rem;
+        line-height: 1.5;
+        color: #e0e0e0;
+        margin: 8px 0;
     }
-    
+
     .key-point {
-    background-color: #2a2a2a;
-    padding: 10px 12px;
-    margin: 8px 0;
-    border-radius: 5px;
-    border-left: 3px solid #3b82f6;
+        background-color: #2a2a2a;
+        padding: 10px 12px;
+        margin: 8px 0;
+        border-radius: 5px;
+        border-left: 3px solid #3b82f6;
     }
-    
+
     .reference-citation {
-    font-size: 0.85rem;
-    color: #a0a0a0;
-    margin-top: 5px;
+        font-size: 0.85rem;
+        color: #a0a0a0;
+        margin-top: 5px;
     }
-    
+
     .source-link {
-    color: #3b82f6;
-    text-decoration: none;
+        color: #3b82f6;
+        text-decoration: none;
     }
-    
+
     .source-link:hover {
-    text-decoration: underline;
+        text-decoration: underline;
     }
-    
+
     .confidence-badge {
-    display: inline-block;
-    padding: 4px 12px;
-    border-radius: 12px;
-    font-size: 0.85rem;
-    font-weight: 500;
-    margin: 8px 0;
+        display: inline-block;
+        padding: 4px 12px;
+        border-radius: 12px;
+        font-size: 0.85rem;
+        font-weight: 500;
+        margin: 8px 0;
     }
-    
+
     .confidence-high { background: #166534; color: #dcfce7; }
     .confidence-moderate { background: #92400e; color: #fef3c7; }
     .confidence-low { background: #991b1b; color: #fee2e2; }
-    
+
     .disclaimer {
-    font-size: 0.85rem;
-    color: #a0a0a0;
-    margin-top: 15px;
-    padding: 10px;
-    border: 1px solid #383838;
-    border-radius: 5px;
-    background-color: #2a2a2a;
+        font-size: 0.85rem;
+        color: #a0a0a0;
+        margin-top: 15px;
+        padding: 10px;
+        border: 1px solid #383838;
+        border-radius: 5px;
+        background-color: #2a2a2a;
     }
-    
+
     /* Hide Streamlit elements */
     .stChatMessage {
-    background-color: transparent !important;
-    padding: 0 !important;
-    margin: 0 !important;
+        background-color: transparent !important;
+        padding: 0 !important;
+        margin: 0 !important;
     }
-    
+
     .stChatMessage [data-testid="stChatMessageContent"] {
-    background-color: transparent !important;
-    padding: 0 !important;
+        background-color: transparent !important;
+        padding: 0 !important;
     }
-    
+
     /* Remove extra padding */
     .element-container:empty {
-    display: none !important;
+        display: none !important;
     }
-    
+
     /* Custom scrollbar */
     ::-webkit-scrollbar {
-    width: 8px;
-    height: 8px;
+        width: 8px;
+        height: 8px;
     }
-    
+
     ::-webkit-scrollbar-track {
-    background: #1e1e1e;
+        background: #1e1e1e;
     }
-    
+
     ::-webkit-scrollbar-thumb {
-    background: #3b82f6;
-    border-radius: 4px;
+        background: #3b82f6;
+        border-radius: 4px;
     }
-    
+
     ::-webkit-scrollbar-thumb:hover {
-    background: #2563eb;
+        background: #2563eb;
     }
-    
+
     /* Error message styling */
     .error-message {
-    background-color: #2a2a2a;
-    border-left: 3px solid #ef4444;
-    padding: 10px 12px;
-    margin: 8px 0;
-    border-radius: 5px;
+        background-color: #2a2a2a;
+        border-left: 3px solid #ef4444;
+        padding: 10px 12px;
+        margin: 8px 0;
+        border-radius: 5px;
     }
-    
+
     .warning-message {
-    background-color: #2a2a2a;
-    border-left: 3px solid #f59e0b;
-    padding: 10px 12px;
-    margin: 8px 0;
-    border-radius: 5px;
+        background-color: #2a2a2a;
+        border-left: 3px solid #f59e0b;
+        padding: 10px 12px;
+        margin: 8px 0;
+        border-radius: 5px;
     }
 </style>
 """, unsafe_allow_html=True)
@@ -238,6 +238,7 @@ Examples:
 "tax rates" → "individual income tax rates Australia 2025-26"
 "GST" → "goods and services tax registration requirements"
 "super" → "superannuation contribution limits tax deduction"
+"laptop depreciation" → "laptop computer depreciation useful life tax"
 
 Return only the enhanced query, no explanation."""
 
@@ -258,7 +259,7 @@ Return only the enhanced query, no explanation."""
 async def check_query_intent(client: AsyncOpenAI, query: str) -> bool:
     # This function is now more permissive for tax-related queries
     # We'll assume most queries are tax-related unless they clearly aren't
-    
+
     # List of keywords that strongly indicate a tax-related query
     tax_keywords = [
         "tax", "ato", "gst", "income", "deduction", "superannuation", "super", "pillar 2", "pillar two", "IDS", "GloBE", "BEPS",
@@ -268,13 +269,13 @@ async def check_query_intent(client: AsyncOpenAI, query: str) -> bool:
         "claim", "refund", "audit", "ruling", "legislation", "act", "section", "division",
         "resident", "non-resident", "foreign", "trust", "partnership", "company", "sole trader"
     ]
-    
+
     # Check if any tax keywords are in the query
     query_lower = query.lower()
     for keyword in tax_keywords:
         if keyword in query_lower:
             return True
-    
+
     # If no keywords found, use the AI to check intent
     intent_prompt = """Is this query about Australian taxation or ATO matters? Answer only "yes" or "no".
 
@@ -321,13 +322,13 @@ def extract_title_from_source(source: str) -> str:
     url_match = re.search(r'(.*?)[\(\[]https?://.*?[\)\]]', source)
     if url_match:
         return url_match.group(1).strip()
-    
+
     # If source is a URL, use the domain name as title
     if source.startswith(('http://', 'https://')):
         domain_match = re.search(r'https?://(?:www\.)?([^/]+)', source)
         if domain_match:
             return domain_match.group(1)
-    
+
     # Otherwise return the source as is
     return source
 
@@ -350,7 +351,7 @@ def categorize_sources(context_docs: List[Dict]) -> tuple:
             url = extract_url_from_source(source)
             # If we have a title from the document, use it, otherwise extract from source
             display_title = title if title and title != 'Unknown' else extract_title_from_source(source)
-            
+
             web_sources.append({
                 'title': display_title,
                 'source': source,
@@ -360,41 +361,88 @@ def categorize_sources(context_docs: List[Dict]) -> tuple:
 
     return legislative_sources, web_sources
 
-def create_title_url_mapping(context_docs: List[Dict]) -> Dict[str, str]:
-    """Create a comprehensive mapping of titles to URLs from context documents."""
+def create_comprehensive_title_url_mapping(context_docs: List[Dict]) -> Dict[str, str]:
+    """Create a comprehensive mapping of titles to URLs from context documents with fuzzy matching."""
     title_to_url = {}
-    
+
     for doc in context_docs:
         title = doc.get('title', '').strip()
         source = doc.get('source_info', '').strip()
-        
+
         if not title or title == 'Unknown':
             continue
-        
+
         # Extract URL from source
         url = extract_url_from_source(source)
-        
+
         if url:
             # Add exact title match
             title_to_url[title] = url
-            
+
             # Add variations of the title for better matching
             # Remove common prefixes/suffixes
             clean_title = re.sub(r'^(source:\s*|title:\s*)', '', title, flags=re.IGNORECASE).strip()
             if clean_title != title:
                 title_to_url[clean_title] = url
-            
+
             # Handle titles with pipe separators (like "Title | Australian Taxation Office")
             if '|' in title:
                 main_title = title.split('|')[0].strip()
                 title_to_url[main_title] = url
-            
+
             # Handle titles with common ATO patterns
             if 'Australian Taxation Office' in title:
                 short_title = title.replace('| Australian Taxation Office', '').strip()
                 title_to_url[short_title] = url
-    
+
+            # Add lowercase versions for case-insensitive matching
+            title_to_url[title.lower()] = url
+            title_to_url[clean_title.lower()] = url
+
+            # Add partial matches for common patterns
+            # Remove common words and create shorter versions
+            words_to_remove = ['the', 'and', 'or', 'of', 'in', 'on', 'at', 'to', 'for', 'with', 'by']
+            title_words = [word for word in title.lower().split() if word not in words_to_remove]
+            if len(title_words) > 2:
+                short_title = ' '.join(title_words[:3])  # First 3 meaningful words
+                title_to_url[short_title] = url
+
     return title_to_url
+
+def find_best_url_match(source_title: str, title_to_url: Dict[str, str]) -> str:
+    """Find the best URL match for a given source title using various matching strategies."""
+    source_title_clean = source_title.strip()
+    source_title_lower = source_title_clean.lower()
+
+    # 1. Exact match (case-sensitive)
+    if source_title_clean in title_to_url:
+        return title_to_url[source_title_clean]
+
+    # 2. Exact match (case-insensitive)
+    if source_title_lower in title_to_url:
+        return title_to_url[source_title_lower]
+
+    # 3. Partial matching - check if source_title is contained in any known title
+    for title, url in title_to_url.items():
+        if source_title_lower in title.lower() or title.lower() in source_title_lower:
+            return url
+
+    # 4. Word-based matching - check if significant words match
+    source_words = set(source_title_lower.split())
+    best_match_score = 0
+    best_url = ""
+
+    for title, url in title_to_url.items():
+        title_words = set(title.lower().split())
+        # Calculate overlap score
+        common_words = source_words.intersection(title_words)
+        if len(common_words) > 0:
+            score = len(common_words) / max(len(source_words), len(title_words))
+            if score > best_match_score and score > 0.3:  # At least 30% word overlap
+                best_match_score = score
+                best_url = url
+
+    return best_url
 
 async def generate_response(client: AsyncOpenAI, query: str, context_docs: List[Dict]) -> str:
     context_text = ""
@@ -415,22 +463,33 @@ Content: {content}
 
     system_prompt = """You are a professional tax advisor specializing in Australian taxation law. Your task is to provide accurate, specific, and well-structured responses based on the Australian Taxation Office (ATO) website and Australian tax legislation.
 
-CRITICAL INSTRUCTIONS:
-1. Provide SPECIFIC rates, thresholds, and amounts when asked about tax rates
-2. Include exact figures and percentages from the provided context
-3. Reference specific legislation sections and ATO guidance documents
-4. Include direct URLs to ATO website sections when available
-5. Do not give generic responses - provide the actual data requested
+CRITICAL INSTRUCTIONS FOR ACCURACY:
+1. Be EXTREMELY SPECIFIC about rates, thresholds, amounts, and timeframes
+2. Pay close attention to EXACT terminology - distinguish between similar concepts (e.g., "laptop" vs "personal computer-based assets")
+3. When discussing depreciation, be precise about asset categories and their specific useful lives
+4. Always cite the EXACT source document and section when making claims
+5. If the context shows conflicting information, acknowledge this and explain the differences
+6. For depreciation queries, look for the MOST SPECIFIC asset category that matches the query
 
-Format your response as a professional file note with the following sections:
-1. Overview: A concise summary of the query and main findings (2-3 sentences)
-2. Key Information: The most important points with specific rates, amounts, and thresholds
-3. Legislation or ATO Reference: Specific sections of legislation or ATO guidance with URLs
-4. Analysis: Your professional interpretation of how the law applies
-5. Conclusion: A clear summary of the answer
-6. Confidence Level: High/Moderate/Low with explanation
+RESPONSE FORMATTING:
+Format your response with the following sections:
+1. Overview: A concise summary (2-3 sentences) focusing on the EXACT answer to the query
+2. Key Information: Specific details with exact figures, rates, and requirements. Use bullet points starting with "•"
+3. Legislation or ATO Reference: Specific legislation sections and ATO guidance with exact citations
+4. Analysis: Professional interpretation explaining how the law applies to the specific query
+5. Conclusion: Clear, definitive answer to the original question
+6. Confidence Level: High/Moderate/Low with detailed explanation
 
-IMPORTANT: When asked about tax rates, provide the actual rates and thresholds, not general statements about where to find them."""
+CITATION REQUIREMENTS:
+- When referencing a source, use the format: [source: Title of Document]
+- Be consistent with document titles as they appear in the context
+- Include specific section numbers, ruling numbers, or determination references where available
+
+ACCURACY REQUIREMENTS:
+- Never provide generic answers when specific information is available
+- Always distinguish between different asset categories, tax rates, or time periods
+- If asked about depreciation, identify the precise asset category and its specific useful life
+- Cross-reference multiple sources if available to ensure accuracy"""
 
     messages = [
         {"role": "system", "content": system_prompt},
@@ -440,49 +499,41 @@ IMPORTANT: When asked about tax rates, provide the actual rates and thresholds, 
     response = await client.chat.completions.create(
         model="gpt-4o-mini",
         messages=messages,
-        max_tokens=2100,
-        temperature=0.1
+        max_tokens=2500,
+        temperature=0.05  # Lower temperature for more consistent, accurate responses
     )
 
     return response.choices[0].message.content
 
 def process_source_references(text: str, title_to_url: Dict[str, str]) -> str:
-    """Process a line of text to convert [source: title] references to clickable links."""
-    
+    """Process text to convert [source: title] references to clickable links with improved matching."""
+
     def replace_source_ref(match):
         source_title = match.group(1).strip()
-        
-        # Try exact match first
-        source_url = title_to_url.get(source_title, "")
-        
-        # If no exact match, try partial matching
-        if not source_url:
-            for title, url in title_to_url.items():
-                # Check if the source_title is contained in any of our known titles
-                if source_title.lower() in title.lower() or title.lower() in source_title.lower():
-                    source_url = url
-                    break
-        
+
+        # Use the improved URL matching function
+        source_url = find_best_url_match(source_title, title_to_url)
+
         # If we have a URL, make it clickable
         if source_url:
             return f'[source: <a href="{source_url}" target="_blank" class="source-link">{source_title}</a>]'
         else:
             return f'[source: {source_title}]'
-    
+
     # Replace all [source: title] patterns with clickable links where URLs are available
     processed_text = re.sub(r'\[source:\s*([^\]]+)\]', replace_source_ref, text)
-    
+
     return processed_text
 
 def format_response_as_html(response_text: str, context_docs: List[Dict]) -> str:
-    """Format the response as HTML to be displayed in the chat interface."""
+    """Format the response as HTML with improved URL linking throughout all sections."""
     # Clean up any markdown formatting
     clean_text = re.sub(r'\*\*(.*?)\*\*', r'\1', response_text)
     clean_text = re.sub(r'#{1,6}\s*', '', clean_text)
     clean_text = re.sub(r'\*\s*', '• ', clean_text)
 
-    # Create a comprehensive mapping of titles to URLs
-    title_to_url = create_title_url_mapping(context_docs)
+    # Create a comprehensive mapping of titles to URLs with improved matching
+    title_to_url = create_comprehensive_title_url_mapping(context_docs)
 
     # FIRST: Handle any markdown-style links that might have been generated
     # Convert [source: title](url) to just [source: title]
@@ -490,23 +541,23 @@ def format_response_as_html(response_text: str, context_docs: List[Dict]) -> str
 
     # Split into sections
     sections = re.split(r'\n\s*(?=Overview:|Key Information:|Legislation or ATO Reference:|Analysis:|Conclusion:|Confidence Level:|References:)', clean_text)
-    
+
     html_output = '<div class="file-note-header">📝 File Note</div>'
-    
+
     # Process each section
     for section in sections:
         section = section.strip()
         if not section:
             continue
-        
+
         # Extract section title and content
         section_parts = section.split(':', 1)
         if len(section_parts) < 2:
             continue
-        
+
         section_title = section_parts[0].strip()
         section_content = section_parts[1].strip()
-        
+
         # Set icon based on section title
         if 'overview' in section_title.lower():
             icon = "📋"
@@ -524,20 +575,20 @@ def format_response_as_html(response_text: str, context_docs: List[Dict]) -> str
             icon = "📚"
         else:
             icon = "ℹ️"
-        
+
         html_output += f'<div class="section-container"><div class="section-header">{icon} {section_title}</div>'
-        
+
         # Handle confidence level differently
         if 'confidence level' in section_title.lower():
             confidence_text = section_content.lower()
-            
+
             if 'high' in confidence_text:
                 badge_class = "confidence-high"
             elif 'moderate' in confidence_text:
                 badge_class = "confidence-moderate"
             else:
                 badge_class = "confidence-low"
-            
+
             html_output += f'<div class="confidence-badge {badge_class}">{section_content}</div>'
         # Handle references section differently
         elif 'references' in section_title.lower():
@@ -556,14 +607,14 @@ def format_response_as_html(response_text: str, context_docs: List[Dict]) -> str
                     # Process regular paragraphs for source references too
                     processed_line = process_source_references(line, title_to_url)
                     html_output += f'<div class="content-text">{processed_line}</div>'
-        
+
         html_output += '</div>'
-    
+
     # Add references section
     legislative_sources, web_sources = categorize_sources(context_docs)
-    
+
     html_output += '<div class="section-container"><div class="section-header">📚 References</div>'
-    
+
     # Display web sources with URLs
     seen_sources = set()
     for source in web_sources:
@@ -571,31 +622,31 @@ def format_response_as_html(response_text: str, context_docs: List[Dict]) -> str
         if source_key in seen_sources:
             continue
         seen_sources.add(source_key)
-        
+
         if source['url']:
             html_output += f'<div class="key-point">• <a href="{source["url"]}" target="_blank" class="source-link">{source["title"]}</a></div>'
         else:
             html_output += f'<div class="key-point">• {source["title"]}</div>'
-    
+
     # Display legislative sources
     for ref in legislative_sources:
         ref_key = f"{ref['source']}_{ref['title']}"
         if ref_key in seen_sources:
             continue
         seen_sources.add(ref_key)
-        
+
         html_output += f'<div class="key-point">• {ref["title"]} ({ref["source"]})</div>'
-    
+
     html_output += '</div>'
-    
+
     # Add disclaimer
     html_output += """
     <div class="disclaimer">
-    <strong>⚠️ Important Notice:</strong> This information is for general guidance only and is based on current ATO documentation. 
-    Tax laws are complex and individual circumstances vary. For personalized advice, please consult a registered tax agent.
+        <strong>⚠️ Important Notice:</strong> This information is for general guidance only and is based on current ATO documentation. 
+        Tax laws are complex and individual circumstances vary. For personalized advice, please consult a registered tax agent.
     </div>
     """
-    
+
     return html_output
 
 async def process_query(query: str, collection, openai_client):
@@ -604,27 +655,27 @@ async def process_query(query: str, collection, openai_client):
     if not is_tax_query:
         return """
         <div class="section-container">
-        <div class="section-header">⚠️ Out of Scope Query</div>
-        <div class="content-text">
-        <p>Koala Tax Assistant can only help with Australian taxation and ATO matters.</p>
-        <p><strong>I can help with:</strong></p>
-        <div class="key-point">• Australian tax laws and regulations</div>
-        <div class="key-point">• Tax returns and deductions</div>
-        <div class="key-point">• GST and income tax questions</div>
-        <div class="key-point">• Superannuation tax matters</div>
-        <div class="key-point">• Business tax obligations</div>
-        <div class="key-point">• Tax agent services</div>
-        </div>
-        <div class="content-text">
-        <p><strong>I cannot help with:</strong></p>
-        <div class="key-point">• Financial advice or investment recommendations</div>
-        <div class="key-point">• Non-Australian tax matters</div>
-        <div class="key-point">• General financial planning</div>
-        <div class="key-point">• Personal financial decisions</div>
-        </div>
-        <div class="content-text">
-        <p>Please ask a question about Australian taxation!</p>
-        </div>
+            <div class="section-header">⚠️ Out of Scope Query</div>
+            <div class="content-text">
+                <p>Koala Tax Assistant can only help with Australian taxation and ATO matters.</p>
+                <p><strong>I can help with:</strong></p>
+                <div class="key-point">• Australian tax laws and regulations</div>
+                <div class="key-point">• Tax returns and deductions</div>
+                <div class="key-point">• GST and income tax questions</div>
+                <div class="key-point">• Superannuation tax matters</div>
+                <div class="key-point">• Business tax obligations</div>
+                <div class="key-point">• Tax agent services</div>
+            </div>
+            <div class="content-text">
+                <p><strong>I cannot help with:</strong></p>
+                <div class="key-point">• Financial advice or investment recommendations</div>
+                <div class="key-point">• Non-Australian tax matters</div>
+                <div class="key-point">• General financial planning</div>
+                <div class="key-point">• Personal financial decisions</div>
+            </div>
+            <div class="content-text">
+                <p>Please ask a question about Australian taxation!</p>
+            </div>
         </div>
         """
 
@@ -636,14 +687,14 @@ async def process_query(query: str, collection, openai_client):
         if not relevant_docs:
             return """
             <div class="section-container">
-            <div class="section-header">❌ No Information Found</div>
-            <div class="content-text">
-            <p>No relevant information found in ATO documentation</p>
-            <p><strong>Suggestions:</strong></p>
-            <div class="key-point">• Try rephrasing your question with specific tax terms</div>
-            <div class="key-point">• Contact the ATO directly on <strong>13 28 61</strong></div>
-            <div class="key-point">• Visit <a href="https://www.ato.gov.au" target="_blank" class="source-link">ato.gov.au</a> for comprehensive information</div>
-            </div>
+                <div class="section-header">❌ No Information Found</div>
+                <div class="content-text">
+                    <p>No relevant information found in ATO documentation</p>
+                    <p><strong>Suggestions:</strong></p>
+                    <div class="key-point">• Try rephrasing your question with specific tax terms</div>
+                    <div class="key-point">• Contact the ATO directly on <strong>13 28 61</strong></div>
+                    <div class="key-point">• Visit <a href="https://www.ato.gov.au" target="_blank" class="source-link">ato.gov.au</a> for comprehensive information</div>
+                </div>
             </div>
             """
 
@@ -654,11 +705,11 @@ async def process_query(query: str, collection, openai_client):
         logger.error(f"Query processing error: {e}")
         return f"""
         <div class="section-container">
-        <div class="section-header">⚠️ Error</div>
-        <div class="content-text">
-        <p>An error occurred while processing your query: {str(e)}</p>
-        <p>Please try again or contact the ATO directly for assistance.</p>
-        </div>
+            <div class="section-header">⚠️ Error</div>
+            <div class="content-text">
+                <p>An error occurred while processing your query: {str(e)}</p>
+                <p>Please try again or contact the ATO directly for assistance.</p>
+            </div>
         </div>
         """
 
