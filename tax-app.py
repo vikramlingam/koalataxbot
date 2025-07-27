@@ -38,7 +38,7 @@ st.markdown("""
     padding: 20px;
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
     }
-    
+
     /* Chat message styling */
     .chat-message {
     background-color: #1e1e1e;
@@ -47,17 +47,17 @@ st.markdown("""
     margin-bottom: 15px;
     color: #ffff;
     }
-    
+
     .user-message {
     background-color: #1e1e1e;
     border: 1px solid #383838;
     }
-    
+
     .assistant-message {
     background-color: #1e1e1e;
     border: 1px solid #383838;
     }
-    
+
     /* File note styling */
     .file-note-header {
     font-size: 1.1rem;
@@ -67,7 +67,7 @@ st.markdown("""
     padding-bottom: 8px;
     border-bottom: 1px solid #3b82f6;
     }
-    
+
     .section-container {
     background-color: #1e1e1e;
     border-radius: 8px;
@@ -75,7 +75,7 @@ st.markdown("""
     margin-bottom: 15px;
     border: 1px solid #383838;
     }
-    
+
     .section-header {
     font-size: 1rem;
     font-weight: 600;
@@ -87,14 +87,14 @@ st.markdown("""
     align-items: center;
     gap: 8px;
     }
-    
+
     .content-text {
     font-size: 0.95rem;
     line-height: 1.5;
     color: #e0e0e0;
     margin: 8px 0;
     }
-    
+
     .key-point {
     background-color: #2a2a2a;
     padding: 10px 12px;
@@ -102,22 +102,22 @@ st.markdown("""
     border-radius: 5px;
     border-left: 3px solid #3b82f6;
     }
-    
+
     .reference-citation {
     font-size: 0.85rem;
     color: #a0a0a0;
     margin-top: 5px;
     }
-    
+
     .source-link {
     color: #3b82f6;
     text-decoration: none;
     }
-    
+
     .source-link:hover {
     text-decoration: underline;
     }
-    
+
     .confidence-badge {
     display: inline-block;
     padding: 4px 12px;
@@ -126,11 +126,11 @@ st.markdown("""
     font-weight: 500;
     margin: 8px 0;
     }
-    
+
     .confidence-high { background: #166534; color: #dcfce7; }
     .confidence-moderate { background: #92400e; color: #fef3c7; }
     .confidence-low { background: #991b1b; color: #fee2e2; }
-    
+
     .disclaimer {
     font-size: 0.85rem;
     color: #a0a0a0;
@@ -140,43 +140,43 @@ st.markdown("""
     border-radius: 5px;
     background-color: #2a2a2a;
     }
-    
+
     /* Hide Streamlit elements */
     .stChatMessage {
     background-color: transparent !important;
     padding: 0 !important;
     margin: 0 !important;
     }
-    
+
     .stChatMessage [data-testid="stChatMessageContent"] {
     background-color: transparent !important;
     padding: 0 !important;
     }
-    
+
     /* Remove extra padding */
     .element-container:empty {
     display: none !important;
     }
-    
+
     /* Custom scrollbar */
     ::-webkit-scrollbar {
     width: 8px;
     height: 8px;
     }
-    
+
     ::-webkit-scrollbar-track {
     background: #1e1e1e;
     }
-    
+
     ::-webkit-scrollbar-thumb {
     background: #3b82f6;
     border-radius: 4px;
     }
-    
+
     ::-webkit-scrollbar-thumb:hover {
     background: #2563eb;
     }
-    
+
     /* Error message styling */
     .error-message {
     background-color: #2a2a2a;
@@ -185,7 +185,7 @@ st.markdown("""
     margin: 8px 0;
     border-radius: 5px;
     }
-    
+
     .warning-message {
     background-color: #2a2a2a;
     border-left: 3px solid #f59e0b;
@@ -257,6 +257,10 @@ Return only the enhanced query, no explanation."""
     return enhanced
 
 async def check_query_intent(client: AsyncOpenAI, query: str) -> bool:
+    # This function is now more permissive for tax-related queries
+    # We'll assume most queries are tax-related unless they clearly aren't
+
+    # List of keywords that strongly indicate a tax-related query
     tax_keywords = [
         "tax", "ato", "gst", "income", "deduction", "superannuation", "super", "pillar 2", "pillar two", "IDS", "GloBE", "BEPS",
         "capital gains", "cgt", "fringe benefits", "fbt", "business", "depreciation", "amortisation", "thin capitalisation", "losses",
@@ -265,17 +269,19 @@ async def check_query_intent(client: AsyncOpenAI, query: str) -> bool:
         "claim", "refund", "audit", "ruling", "legislation", "act", "section", "division",
         "resident", "non-resident", "foreign", "trust", "partnership", "company", "sole trader"
     ]
-    
+
+    # Check if any tax keywords are in the query
     query_lower = query.lower()
     for keyword in tax_keywords:
         if keyword in query_lower:
             return True
-    
+
+    # If no keywords found, use the AI to check intent
     intent_prompt = """Is this query about Australian taxation or ATO matters? Answer only "yes" or "no".
 
 YES: Australian tax laws, ATO procedures, tax rates, GST, income tax, capital gains, superannuation tax, business tax, tax deductions, tax returns, tax agents, tax exemptions, tax concessions
 NO: Financial advice, investment recommendations, non-Australian tax, general chat, personal financial planning that's not tax-related"""
-    
+
     response = await client.chat.completions.create(
         model="gpt-4o-mini",
         messages=[
@@ -285,7 +291,7 @@ NO: Financial advice, investment recommendations, non-Australian tax, general ch
         max_tokens=5,
         temperature=0
     )
-    
+
     result = response.choices[0].message.content.strip().lower()
     return result == "yes"
 
@@ -293,13 +299,16 @@ def extract_url_from_source(source: str) -> str:
     if not source:
         return ""
 
+    # Check if the source is already a URL
     if source.startswith(('http://', 'https://')):
         return source
 
+    # Extract URL from text with parentheses or brackets
     url_match = re.search(r'(https?://[^\s\)\]\,]+)', source)
     if url_match:
         return url_match.group(1)
 
+    # For ATO sources without http prefix
     if 'ato.gov.au' in source.lower() and not source.startswith('http'):
         clean_source = source.replace('Source: ', '').strip()
         if not clean_source.startswith('http'):
@@ -308,15 +317,19 @@ def extract_url_from_source(source: str) -> str:
     return ""
 
 def extract_title_from_source(source: str) -> str:
+    """Extract a clean title from a source string."""
+    # If source contains a URL in parentheses or brackets, extract the text before it
     url_match = re.search(r'(.*?)[\(\[]https?://.*?[\)\]]', source)
     if url_match:
         return url_match.group(1).strip()
-    
+
+    # If source is a URL, use the domain name as title
     if source.startswith(('http://', 'https://')):
         domain_match = re.search(r'https?://(?:www\.)?([^/]+)', source)
         if domain_match:
             return domain_match.group(1)
-    
+
+    # Otherwise return the source as is
     return source
 
 def categorize_sources(context_docs: List[Dict]) -> tuple:
@@ -336,8 +349,9 @@ def categorize_sources(context_docs: List[Dict]) -> tuple:
             })
         else:
             url = extract_url_from_source(source)
+            # If we have a title from the document, use it, otherwise extract from source
             display_title = title if title and title != 'Unknown' else extract_title_from_source(source)
-            
+
             web_sources.append({
                 'title': display_title,
                 'source': source,
@@ -348,64 +362,78 @@ def categorize_sources(context_docs: List[Dict]) -> tuple:
     return legislative_sources, web_sources
 
 def create_title_url_mapping(context_docs: List[Dict]) -> Dict[str, str]:
+    """Create a comprehensive mapping of titles to URLs from context documents."""
     title_to_url = {}
-    
+
     for doc in context_docs:
         title = doc.get('title', '').strip()
         source = doc.get('source_info', '').strip()
-        
+
         if not title or title == 'Unknown':
             continue
-        
+
+        # Extract URL from source
         url = extract_url_from_source(source)
-        
+
         if url:
+            # Add exact title match
             title_to_url[title] = url
-            
+
+            # Add variations of the title for better matching
+            # Remove common prefixes/suffixes
             clean_title = re.sub(r'^(source:\s*|title:\s*)', '', title, flags=re.IGNORECASE).strip()
             if clean_title != title:
                 title_to_url[clean_title] = url
-            
+
+            # Handle titles with pipe separators (like "Title | Australian Taxation Office")
             if '|' in title:
                 main_title = title.split('|')[0].strip()
                 title_to_url[main_title] = url
-            
+
+            # Handle titles with common ATO patterns
             if 'Australian Taxation Office' in title:
                 short_title = title.replace('| Australian Taxation Office', '').strip()
                 title_to_url[short_title] = url
-            
+
+            # Add case-insensitive versions
             title_to_url[title.lower()] = url
             title_to_url[clean_title.lower()] = url
-    
+
     return title_to_url
 
 def find_best_url_match(source_title: str, title_to_url: Dict[str, str]) -> str:
+    """Find the best URL match for a given source title using various matching strategies."""
     source_title_clean = source_title.strip()
     source_title_lower = source_title_clean.lower()
-    
+
+    # 1. Exact match (case-sensitive)
     if source_title_clean in title_to_url:
         return title_to_url[source_title_clean]
-    
+
+    # 2. Exact match (case-insensitive)
     if source_title_lower in title_to_url:
         return title_to_url[source_title_lower]
-    
+
+    # 3. Partial matching - check if source_title is contained in any known title
     for title, url in title_to_url.items():
         if source_title_lower in title.lower() or title.lower() in source_title_lower:
             return url
-    
+
+    # 4. Word-based matching - check if significant words match
     source_words = set(source_title_lower.split())
     best_match_score = 0
     best_url = ""
-    
+
     for title, url in title_to_url.items():
         title_words = set(title.lower().split())
+        # Calculate overlap score
         common_words = source_words.intersection(title_words)
         if len(common_words) > 0:
             score = len(common_words) / max(len(source_words), len(title_words))
-            if score > best_match_score and score > 0.3:
+            if score > best_match_score and score > 0.3:  # At least 30% word overlap
                 best_match_score = score
                 best_url = url
-    
+
     return best_url
 
 async def generate_response(client: AsyncOpenAI, query: str, context_docs: List[Dict]) -> str:
@@ -457,102 +485,123 @@ ACCURACY REQUIREMENTS:
 
     messages = [
         {"role": "system", "content": system_prompt},
-        {"role": "user", "content": f"Query: {query}\\n\\nContext:\\n{context_text}"}
+        {"role": "user", "content": f"Query: {query}
+
+Context:
+{context_text}"}
     ]
 
     response = await client.chat.completions.create(
         model="gpt-4o-mini",
         messages=messages,
         max_tokens=2500,
-        temperature=0.05
+        temperature=0.05  # Lower temperature for more consistent, accurate responses
     )
 
     return response.choices[0].message.content
 
 def process_source_references(text: str, title_to_url: Dict[str, str]) -> str:
+    """Process text to convert [source: title] references to clickable links."""
+
     def replace_source_ref(match):
         source_title = match.group(1).strip()
+
+        # Use the improved URL matching function
         source_url = find_best_url_match(source_title, title_to_url)
+
+        # If we have a URL, make it clickable
         if source_url:
             return f'<a href="{source_url}" target="_blank" class="source-link">{source_title}</a>'
         else:
             return source_title
 
+    # Replace all [source: title] patterns with clickable links where URLs are available
     processed_text = re.sub(r'\[source:\s*([^\]]+)\]', replace_source_ref, text)
+
     return processed_text
 
 def format_response_as_html(response_text: str, context_docs: List[Dict]) -> str:
-    # Remove stray HTML tags that might be in the response text
-    cleaned_text = re.sub(r'</?div[^>]*>', '', response_text)
-    cleaned_text = re.sub(r'</?p[^>]*>', '', cleaned_text)
+    """Format the response as HTML to be displayed in the chat interface."""
+    # Clean up any markdown formatting
+    clean_text = re.sub(r'\*\*(.*?)\*\*', r'\1', response_text)
+    clean_text = re.sub(r'#{1,6}\s*', '', clean_text)
+    clean_text = re.sub(r'\*\s*', '• ', clean_text)
 
-    # Create mapping for source titles to URLs
+    # Create a comprehensive mapping of titles to URLs
     title_to_url = create_title_url_mapping(context_docs)
 
-    # Split response into sections by known headers
-    sections = re.split(r'\n\s*(?=Overview:|Key Information:|Legislation or ATO Reference:|Analysis:|Conclusion:|Confidence Level:|References:)', cleaned_text)
+    # FIRST: Handle any markdown-style links that might have been generated
+    # Convert [source: title](url) to just [source: title]
+    clean_text = re.sub(r'\[source: ([^\]]+)\]\([^)]+\)', r'[source: \1]', clean_text)
+
+    # Split into sections
+    sections = re.split(r'\n\s*(?=Overview:|Key Information:|Legislation or ATO Reference:|Analysis:|Conclusion:|Confidence Level:|References:)', clean_text)
 
     html_output = '<div class="file-note-header">📝 File Note</div>'
 
+    # Process each section
     for section in sections:
         section = section.strip()
         if not section:
             continue
 
         # Extract section title and content
-        parts = section.split(':', 1)
-        if len(parts) < 2:
+        section_parts = section.split(':', 1)
+        if len(section_parts) < 2:
             continue
-        section_title = parts[0].strip()
-        section_content = parts[1].strip()
 
-        # Determine icon
-        icon_map = {
-            'overview': '📋',
-            'key information': '📊',
-            'legislation': '⚖️',
-            'ato reference': '⚖️',
-            'analysis': '🔍',
-            'conclusion': '✅',
-            'confidence level': '🔒',
-            'references': '📚'
-        }
-        icon = 'ℹ️'
-        for key in icon_map:
-            if key in section_title.lower():
-                icon = icon_map[key]
-                break
+        section_title = section_parts[0].strip()
+        section_content = section_parts[1].strip()
+
+        # Set icon based on section title
+        if 'overview' in section_title.lower():
+            icon = "📋"
+        elif 'key information' in section_title.lower():
+            icon = "📊"
+        elif 'legislation' in section_title.lower() or 'ato reference' in section_title.lower():
+            icon = "⚖️"
+        elif 'analysis' in section_title.lower():
+            icon = "🔍"
+        elif 'conclusion' in section_title.lower():
+            icon = "✅"
+        elif 'confidence' in section_title.lower():
+            icon = "🔒"
+        elif 'references' in section_title.lower():
+            icon = "📚"
+        else:
+            icon = "ℹ️"
 
         html_output += f'<div class="section-container"><div class="section-header">{icon} {section_title}</div>'
 
+        # Handle confidence level differently
         if 'confidence level' in section_title.lower():
             confidence_text = section_content.lower()
+
             if 'high' in confidence_text:
                 badge_class = "confidence-high"
             elif 'moderate' in confidence_text:
                 badge_class = "confidence-moderate"
             else:
                 badge_class = "confidence-low"
+
             html_output += f'<div class="confidence-badge {badge_class}">{section_content}</div>'
+        # Handle references section differently
         elif 'references' in section_title.lower():
-            # We'll generate references separately below
+            # Skip this section as we'll generate our own references section
             pass
         else:
-            # Convert bullet points to HTML list
+            # Process content as bullet points or paragraphs
             lines = section_content.split('\n')
-            bullet_lines = [line.strip() for line in lines if line.strip().startswith('•')]
-            non_bullet_lines = [line.strip() for line in lines if line.strip() and not line.strip().startswith('•')]
-
-            if bullet_lines:
-                html_output += '<ul>'
-                for line in bullet_lines:
-                    processed_line = process_source_references(line[1:].strip(), title_to_url)
-                    html_output += f'<li class="key-point">{processed_line}</li>'
-                html_output += '</ul>'
-
-            for line in non_bullet_lines:
-                processed_line = process_source_references(line, title_to_url)
-                html_output += f'<p class="content-text">{processed_line}</p>'
+            for line in lines:
+                line = line.strip()
+                if line and line.startswith('•'):
+                    # Process the line to convert [source: title] to clickable links
+                    processed_line = process_source_references(line, title_to_url)
+                    html_output += f'<div class="key-point">{processed_line}</div>'
+                elif line:
+                    # Process regular paragraphs for source references too
+                    processed_line = process_source_references(line, title_to_url)
+                    html_output += f'<div class="content-text">{processed_line}</div>'
 
         html_output += '</div>'
 
@@ -561,6 +610,7 @@ def format_response_as_html(response_text: str, context_docs: List[Dict]) -> str
 
     html_output += '<div class="section-container"><div class="section-header">📚 References</div>'
 
+    # Display web sources with URLs
     seen_sources = set()
     for source in web_sources:
         source_key = f"{source['source']}_{source['title']}"
@@ -573,6 +623,7 @@ def format_response_as_html(response_text: str, context_docs: List[Dict]) -> str
         else:
             html_output += f'<div class="key-point">• {source["title"]}</div>'
 
+    # Display legislative sources
     for ref in legislative_sources:
         ref_key = f"{ref['source']}_{ref['title']}"
         if ref_key in seen_sources:
@@ -666,8 +717,7 @@ def main():
         sourced from the ATO website and selected Australian tax legislation (including relevant sections of the Corporations Act).
         As such, it may not provide exhaustive or fully comprehensive answers, nor should it be considered a substitute for professional
         tax advice. This tool may also not perform accurate calculations. It is currently a proof of concept.
-        """
-    )
+        """)
 
     collection, openai_client = init_connections()
     if not collection or not openai_client:
@@ -685,18 +735,18 @@ def main():
         with col1:
             if st.button("📊 Individual tax rates 2025-26", use_container_width=True):
                 st.session_state.sample_query = "What are the individual income tax rates for 2025-26?"
-                st.experimental_rerun()
+                st.rerun()
             if st.button("🏢 GST registration requirements", use_container_width=True):
                 st.session_state.sample_query = "What are the GST registration requirements for businesses?"
-                st.experimental_rerun()
+                st.rerun()
 
         with col2:
             if st.button("🏠 Capital gains tax on property", use_container_width=True):
                 st.session_state.sample_query = "How is capital gains tax calculated on investment property?"
-                st.experimental_rerun()
+                st.rerun()
             if st.button("🏢 Small Business CGT Concessions", use_container_width=True):
                 st.session_state.sample_query = "What are the eligibility criteria for the small business CGT concessions in Australia for 2025-26, and how do they reduce capital gains?"
-                st.experimental_rerun()
+                st.rerun()
 
     # Display chat history (excluding the current query if it exists)
     for i, message in enumerate(st.session_state.messages):
@@ -715,30 +765,38 @@ def main():
         query = st.session_state.sample_query
         del st.session_state.sample_query
 
+        # Add user message to chat history
         st.session_state.messages.append({"role": "user", "content": query})
 
+        # Display user message
         with st.chat_message("user"):
             st.markdown(f'<div class="chat-message user-message">{query}</div>', unsafe_allow_html=True)
 
+        # Process and display assistant response
         with st.chat_message("assistant", avatar="🐨"):
             with st.spinner("🔍 Researching tax information..."):
                 response_html = asyncio.run(process_query(query, collection, openai_client))
                 st.markdown(f'<div class="chat-message assistant-message">{response_html}</div>', unsafe_allow_html=True)
 
+        # Add assistant response to chat history
         st.session_state.messages.append({"role": "assistant", "content": response_html, "is_html": True})
 
     # Chat input for new queries
     if prompt := st.chat_input("Ask me about Australian taxation..."):
+        # Add user message to chat history
         st.session_state.messages.append({"role": "user", "content": prompt})
 
+        # Display user message
         with st.chat_message("user"):
             st.markdown(f'<div class="chat-message user-message">{prompt}</div>', unsafe_allow_html=True)
 
+        # Process and display assistant response
         with st.chat_message("assistant", avatar="🐨"):
             with st.spinner("🔍 Researching tax information..."):
                 response_html = asyncio.run(process_query(prompt, collection, openai_client))
                 st.markdown(f'<div class="chat-message assistant-message">{response_html}</div>', unsafe_allow_html=True)
 
+        # Add assistant response to chat history
         st.session_state.messages.append({"role": "assistant", "content": response_html, "is_html": True})
 
 if __name__ == "__main__":
