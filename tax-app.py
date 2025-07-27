@@ -11,8 +11,6 @@ from astrapy.db import AstraDB
 from openai import AsyncOpenAI
 from dotenv import load_dotenv
 
-# load_dotenv()
-
 # Configure logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -35,98 +33,98 @@ st.set_page_config(
 st.markdown("""
 <style>
     .main {
-        max-width: 1000px;
-        margin: 0 auto;
-        padding: 20px;
-        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+    max-width: 1000px;
+    margin: 0 auto;
+    padding: 20px;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
     }
     
     /* Chat message styling */
     .chat-message {
-        background-color: #1e1e1e;
-        border-radius: 10px;
-        padding: 15px;
-        margin-bottom: 15px;
-        color: #ffff;
+    background-color: #1e1e1e;
+    border-radius: 10px;
+    padding: 15px;
+    margin-bottom: 15px;
+    color: #ffff;
     }
     
     .user-message {
-        background-color: #1e1e1e;
-        border: 1px solid #383838;
+    background-color: #1e1e1e;
+    border: 1px solid #383838;
     }
     
     .assistant-message {
-        background-color: #1e1e1e;
-        border: 1px solid #383838;
+    background-color: #1e1e1e;
+    border: 1px solid #383838;
     }
     
     /* File note styling */
     .file-note-header {
-        font-size: 1.1rem;
-        font-weight: 600;
-        color: #e0e0e0;
-        margin-bottom: 10px;
-        padding-bottom: 8px;
-        border-bottom: 1px solid #3b82f6;
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: #e0e0e0;
+    margin-bottom: 10px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid #3b82f6;
     }
     
     .section-container {
-        background-color: #1e1e1e;
-        border-radius: 8px;
-        padding: 15px;
-        margin-bottom: 15px;
-        border: 1px solid #383838;
+    background-color: #1e1e1e;
+    border-radius: 8px;
+    padding: 15px;
+    margin-bottom: 15px;
+    border: 1px solid #383838;
     }
     
     .section-header {
-        font-size: 1rem;
-        font-weight: 600;
-        color: #e0e0e0;
-        margin-bottom: 10px;
-        padding-bottom: 5px;
-        border-bottom: 1px solid #3b82f6;
-        display: flex;
-        align-items: center;
-        gap: 8px;
+    font-size: 1rem;
+    font-weight: 600;
+    color: #e0e0e0;
+    margin-bottom: 10px;
+    padding-bottom: 5px;
+    border-bottom: 1px solid #3b82f6;
+    display: flex;
+    align-items: center;
+    gap: 8px;
     }
     
     .content-text {
-        font-size: 0.95rem;
-        line-height: 1.5;
-        color: #e0e0e0;
-        margin: 8px 0;
+    font-size: 0.95rem;
+    line-height: 1.5;
+    color: #e0e0e0;
+    margin: 8px 0;
     }
     
     .key-point {
-        background-color: #2a2a2a;
-        padding: 10px 12px;
-        margin: 8px 0;
-        border-radius: 5px;
-        border-left: 3px solid #3b82f6;
+    background-color: #2a2a2a;
+    padding: 10px 12px;
+    margin: 8px 0;
+    border-radius: 5px;
+    border-left: 3px solid #3b82f6;
     }
     
     .reference-citation {
-        font-size: 0.85rem;
-        color: #a0a0a0;
-        margin-top: 5px;
+    font-size: 0.85rem;
+    color: #a0a0a0;
+    margin-top: 5px;
     }
     
     .source-link {
-        color: #3b82f6;
-        text-decoration: none;
+    color: #3b82f6;
+    text-decoration: none;
     }
     
     .source-link:hover {
-        text-decoration: underline;
+    text-decoration: underline;
     }
     
     .confidence-badge {
-        display: inline-block;
-        padding: 4px 12px;
-        border-radius: 12px;
-        font-size: 0.85rem;
-        font-weight: 500;
-        margin: 8px 0;
+    display: inline-block;
+    padding: 4px 12px;
+    border-radius: 12px;
+    font-size: 0.85rem;
+    font-weight: 500;
+    margin: 8px 0;
     }
     
     .confidence-high { background: #166534; color: #dcfce7; }
@@ -134,66 +132,66 @@ st.markdown("""
     .confidence-low { background: #991b1b; color: #fee2e2; }
     
     .disclaimer {
-        font-size: 0.85rem;
-        color: #a0a0a0;
-        margin-top: 15px;
-        padding: 10px;
-        border: 1px solid #383838;
-        border-radius: 5px;
-        background-color: #2a2a2a;
+    font-size: 0.85rem;
+    color: #a0a0a0;
+    margin-top: 15px;
+    padding: 10px;
+    border: 1px solid #383838;
+    border-radius: 5px;
+    background-color: #2a2a2a;
     }
     
     /* Hide Streamlit elements */
     .stChatMessage {
-        background-color: transparent !important;
-        padding: 0 !important;
-        margin: 0 !important;
+    background-color: transparent !important;
+    padding: 0 !important;
+    margin: 0 !important;
     }
     
     .stChatMessage [data-testid="stChatMessageContent"] {
-        background-color: transparent !important;
-        padding: 0 !important;
+    background-color: transparent !important;
+    padding: 0 !important;
     }
     
     /* Remove extra padding */
     .element-container:empty {
-        display: none !important;
+    display: none !important;
     }
     
     /* Custom scrollbar */
     ::-webkit-scrollbar {
-        width: 8px;
-        height: 8px;
+    width: 8px;
+    height: 8px;
     }
     
     ::-webkit-scrollbar-track {
-        background: #1e1e1e;
+    background: #1e1e1e;
     }
     
     ::-webkit-scrollbar-thumb {
-        background: #3b82f6;
-        border-radius: 4px;
+    background: #3b82f6;
+    border-radius: 4px;
     }
     
     ::-webkit-scrollbar-thumb:hover {
-        background: #2563eb;
+    background: #2563eb;
     }
     
     /* Error message styling */
     .error-message {
-        background-color: #2a2a2a;
-        border-left: 3px solid #ef4444;
-        padding: 10px 12px;
-        margin: 8px 0;
-        border-radius: 5px;
+    background-color: #2a2a2a;
+    border-left: 3px solid #ef4444;
+    padding: 10px 12px;
+    margin: 8px 0;
+    border-radius: 5px;
     }
     
     .warning-message {
-        background-color: #2a2a2a;
-        border-left: 3px solid #f59e0b;
-        padding: 10px 12px;
-        margin: 8px 0;
-        border-radius: 5px;
+    background-color: #2a2a2a;
+    border-left: 3px solid #f59e0b;
+    padding: 10px 12px;
+    margin: 8px 0;
+    border-radius: 5px;
     }
 </style>
 """, unsafe_allow_html=True)
@@ -220,42 +218,109 @@ async def get_embedding(text: str, client: AsyncOpenAI) -> List[float]:
     )
     return response.data[0].embedding
 
-def search_documents(collection, query_embedding: List[float], limit: int = 5) -> List[Dict]:
+def score_document_relevance(doc: Dict, query: str) -> float:
+    """Score document relevance based on content and source type."""
+    content = doc.get('text_content', '').lower()
+    source = doc.get('source_info', '').lower()
+    title = doc.get('title', '').lower()
+    
+    score = 0.0
+    
+    # Boost score for legislative sources
+    if any(term in source.upper() for term in ['ACT', 'SECT', 'ITAA', 'FBTAA', 'GST ACT', 'TAA']):
+        score += 2.0
+    
+    # Boost for specific section references
+    if re.search(r'section \d+|division \d+|subsection \d+\(\d+\)', content):
+        score += 1.5
+    
+    # Penalize irrelevant topics
+    query_lower = query.lower()
+    irrelevant_mappings = {
+        'entertainment': ['transfer pricing', 'thin capitalisation', 'international tax'],
+        'gst': ['income tax', 'capital gains'],
+        'individual': ['company tax', 'corporate'],
+    }
+    
+    for topic, irrelevant_terms in irrelevant_mappings.items():
+        if topic in query_lower:
+            for irrelevant in irrelevant_terms:
+                if irrelevant in content:
+                    score -= 2.0
+    
+    # Boost for exact keyword matches
+    keywords = query_lower.split()
+    for keyword in keywords:
+        if keyword in content:
+            score += 0.3
+    
+    return score
+
+def search_documents_filtered(collection, query_embedding: List[float], query: str, limit: int = 8) -> List[Dict]:
+    """Search with relevance filtering and re-ranking."""
     try:
+        # Get more results initially
         results = collection.vector_find(
             vector=query_embedding,
-            limit=limit,
+            limit=limit * 2,  # Get more to filter
             fields=["_id", "title", "text_content", "source_info", "document_id", "chunk_order"]
         )
-        return list(results)
+        
+        # Score and re-rank
+        scored_results = [(doc, score_document_relevance(doc, query)) for doc in results]
+        scored_results.sort(key=lambda x: x[1], reverse=True)
+        
+        # Return top results
+        return [doc for doc, score in scored_results[:limit] if score > -1]
+        
     except Exception as e:
         logger.error(f"Search error: {e}")
         return []
 
-async def enhance_query(client: AsyncOpenAI, query: str) -> str:
-    enhancement_prompt = """Rephrase this tax question to be more specific and searchable for Australian taxation documents. 
-    Focus on key ATO terms and concepts. Keep it concise but precise.
+async def enhance_query_with_context(client: AsyncOpenAI, query: str) -> str:
+    """Enhance query with specific legislative context."""
+    
+    # Map common queries to specific legislative sections
+    query_mappings = {
+        'entertainment': 'entertainment expenses FBT deductibility ITAA 1997 section 32-5',
+        'meal': 'meal entertainment fringe benefits tax FBTAA 1986',
+        'company tax': 'company tax rates ITAA 1936 section 23',
+        'gst': 'goods and services tax GST Act 1999',
+        'capital gains': 'capital gains tax CGT ITAA 1997',
+        'superannuation': 'superannuation guarantee SGAA 1992',
+        'fringe benefits': 'fringe benefits tax FBTAA 1986',
+        'deduction': 'tax deductions ITAA 1997 Division 8',
+        'depreciation': 'depreciation capital allowances ITAA 1997 Division 40',
+    }
+    
+    query_lower = query.lower()
+    
+    # Check for specific mappings
+    for key, enhancement in query_mappings.items():
+        if key in query_lower:
+            return f"{query} {enhancement}"
+    
+    # Default enhancement
+    enhancement_prompt = """Enhance this Australian tax query by adding specific legislative references and ATO terms. Focus on the most relevant legislation.
 
-    Examples:
-    "tax rates" → "individual income tax rates Australia 2025-26"
-    "GST" → "goods and services tax registration requirements"
-    "super" → "superannuation contribution limits tax deduction"
+Examples:
+- "entertainment" → "entertainment expenses tax treatment ITAA 1997 section 32-5 FBTAA 1986"
+- "company tax" → "company income tax rates ITAA 1936 section 23"
+- "GST registration" → "GST registration requirements GST Act 1999 Division 23"
 
-    Return only the enhanced query, no explanation."""
-
+Return only the enhanced query."""
+    
     response = await client.chat.completions.create(
         model="gpt-4o-mini",
         messages=[
             {"role": "system", "content": enhancement_prompt},
             {"role": "user", "content": query}
         ],
-        max_tokens=250,
+        max_tokens=150,
         temperature=0.1
     )
-
-    enhanced = response.choices[0].message.content.strip()
-    logger.info(f"Enhanced query: {query} → {enhanced}")
-    return enhanced
+    
+    return response.choices[0].message.content.strip()
 
 async def check_query_intent(client: AsyncOpenAI, query: str) -> bool:
     # This function is now more permissive for tax-related queries
@@ -264,7 +329,7 @@ async def check_query_intent(client: AsyncOpenAI, query: str) -> bool:
     # List of keywords that strongly indicate a tax-related query
     tax_keywords = [
         "tax", "ato", "gst", "income", "deduction", "superannuation", "super", "pillar 2", "pillar two", "IDS", "GloBE", "BEPS",
-        "capital gains", "cgt", "fringe benefits", "fbt", "business", "depreciation", "amortisation", "thin capitalisation", "losses"
+        "capital gains", "cgt", "fringe benefits", "fbt", "business", "depreciation", "amortisation", "thin capitalisation", "losses",
         "dividend", "offset", "rebate", "lodgment", "return", "assessment", "exemption", "deductions", "audit", "individual",
         "withholding", "payg", "medicare", "levy", "concession", "allowance", "expense", "useful life",
         "claim", "refund", "audit", "ruling", "legislation", "act", "section", "division",
@@ -333,34 +398,59 @@ def extract_title_from_source(source: str) -> str:
     # Otherwise return the source as is
     return source
 
-def categorize_sources(context_docs: List[Dict]) -> tuple:
+def categorize_and_prioritize_sources(context_docs: List[Dict]) -> tuple:
+    """Categorize and prioritize sources by relevance."""
+    
     legislative_sources = []
-    web_sources = []
-
+    ato_guidance = []
+    general_sources = []
+    
     for doc in context_docs:
         source = doc.get('source_info', '')
         title = doc.get('title', '')
         content = doc.get('text_content', '')
-
-        if 'ACT' in source.upper() and 'SECT' in source.upper():
+        
+        source_upper = source.upper()
+        
+        # Legislative sources (highest priority)
+        if any(term in source_upper for term in ['ITAA 1997', 'ITAA 1936', 'FBTAA 1986', 'GST ACT', 'TAA 1953']):
+            # Extract specific section references
+            section_match = re.search(r'(section|division|subsection)\s+[\d\(\)]+', content, re.IGNORECASE)
+            section_ref = section_match.group(0) if section_match else ''
+            
             legislative_sources.append({
                 'title': title,
                 'source': source,
-                'content': content
+                'content': content,
+                'section': section_ref,
+                'priority': 3
             })
-        else:
-            url = extract_url_from_source(source)
-            # If we have a title from the document, use it, otherwise extract from source
-            display_title = title if title and title != 'Unknown' else extract_title_from_source(source)
-            
-            web_sources.append({
-                'title': display_title,
+        
+        # ATO guidance (medium priority)
+        elif 'ato.gov.au' in source.lower() or 'ato' in title.lower():
+            ato_guidance.append({
+                'title': title,
                 'source': source,
                 'content': content,
-                'url': url
+                'url': extract_url_from_source(source),
+                'priority': 2
             })
-
-    return legislative_sources, web_sources
+        
+        # General sources (lowest priority)
+        else:
+            ato_guidance.append({
+                'title': title,
+                'source': source,
+                'content': content,
+                'url': extract_url_from_source(source),
+                'priority': 1
+            })
+    
+    # Sort by priority
+    all_sources = legislative_sources + ato_guidance
+    all_sources.sort(key=lambda x: x['priority'], reverse=True)
+    
+    return legislative_sources, ato_guidance
 
 def create_title_url_mapping(context_docs: List[Dict]) -> Dict[str, str]:
     """Create a comprehensive mapping of titles to URLs from context documents."""
@@ -372,7 +462,7 @@ def create_title_url_mapping(context_docs: List[Dict]) -> Dict[str, str]:
         
         if not title or title == 'Unknown':
             continue
-            
+        
         # Extract URL from source
         url = extract_url_from_source(source)
         
@@ -398,81 +488,65 @@ def create_title_url_mapping(context_docs: List[Dict]) -> Dict[str, str]:
     
     return title_to_url
 
-async def generate_response(client: AsyncOpenAI, query: str, context_docs: List[Dict]) -> str:
-    context_text = ""
-    for i, doc in enumerate(context_docs, 1):
-        source = doc.get('source_info', 'Unknown')
-        title = doc.get('title', 'Unknown')
-        content = doc.get('text_content', '')
-        url = extract_url_from_source(source)
+async def generate_enhanced_response(client: AsyncOpenAI, query: str, context_docs: List[Dict]) -> str:
+    """Generate response with better source prioritization."""
+    
+    # Filter and prioritize documents
+    legislative, ato_guidance = categorize_and_prioritize_sources(context_docs)
+    
+    # Build context with priority
+    context_parts = []
+    
+    # Add legislative sources first
+    for doc in legislative[:3]:  # Top 3 legislative
+        context_parts.append(f"""
+LEGISLATION: {doc['title']}
+Section: {doc['section']}
+Source: {doc['source']}
+Content: {doc['content']}
+""")
+    
+    # Add ATO guidance
+    for doc in ato_guidance[:3]:  # Top 3 ATO
+        context_parts.append(f"""
+ATO GUIDANCE: {doc['title']}
+URL: {doc['url']}
+Content: {doc['content']}
+""")
+    
+    context_text = "\n---\n".join(context_parts)
+    
+    # Updated system prompt
+    system_prompt = """You are a professional tax advisor specializing in Australian taxation law. Provide accurate responses based on Australian tax legislation and ATO guidance.
 
-        context_text += f"""
-Document {i}:
-Source: {source}
-Title: {title}
-URL: {url}
-Content: {content}
----
-"""
+CRITICAL RULES:
+1. Prioritize legislative references (ITAA 1997, ITAA 1936, FBTAA 1986, GST Act) over general guidance
+2. Include specific section numbers when available
+3. For entertainment expenses, reference ITAA 1997 Division 32 and FBTAA 1986
+4. Exclude irrelevant topics like transfer pricing unless specifically asked
+5. Provide direct links to ATO website sections
+6. Always reference the most current legislation and rates
 
-    system_prompt = """You are a professional tax advisor specializing in Australian taxation law. Your task is to provide accurate, well-structured responses based on the Australian Taxation Office (ATO) website and Australian tax legislation.
-
-Format your response as a professional file note with the following sections:
-1. Overview: A concise summary of the query and main findings (2-3 sentences)
-2. Key Information: The most important points relevant to the query
-3. Legislation or ATO Reference: Specific sections of legislation or ATO guidance
-4. Analysis: Your professional interpretation of how the law applies
-5. Conclusion: A clear summary of the answer
-6. IMPORTANT: If the user did not specify any Year in their query, always consider the most latest year information available in the database
-
-IMPORTANT FORMATTING RULES:
-- Each section should have a clear heading
-- Include source references at the end of key points in format [source: title]
-- Use the EXACT title as provided in the context documents for source references
-- Maintain professional language throughout
-- Be precise and accurate with legal references
-- Include section numbers when referencing legislation
-- Do not fabricate information - only use what's in the provided context
-
-CONFIDENCE LEVEL:
-- At the end, include a confidence level assessment:
-- High: Clear and direct support from multiple sources
-- Moderate: Partial support from sources or limited sources
-- Low: Limited or no direct source support
-
-EXAMPLE FORMAT:
-Overview:
-[Concise summary of the query and findings]
-
-Key Information:
-• First key point with specific details [source: exact title from context]
-• Second key point with rates or amounts [source: exact title from context]
-• Third key point with requirements [source: exact title from context]
-
-Legislation or ATO Reference:
-• Relevant legislation section with specific details [source: exact title from context]
-• ATO guidance document with specific details [source: exact title from context]
-
-Analysis:
-[Professional interpretation of how the law applies to the query]
-
-Conclusion:
-[Clear summary of the answer to the query]
-
-Confidence Level: [High/Moderate/Low] - [Brief explanation of confidence assessment]"""
+Format as professional file note with:
+- Overview
+- Key Information (with specific legislative references)
+- Legislation/ATO Reference (with section numbers)
+- Analysis
+- Conclusion
+- Confidence Level"""
 
     messages = [
         {"role": "system", "content": system_prompt},
         {"role": "user", "content": f"Query: {query}\n\nContext:\n{context_text}"}
     ]
-
+    
     response = await client.chat.completions.create(
         model="gpt-4o-mini",
         messages=messages,
-        max_tokens=2100,
+        max_tokens=2000,
         temperature=0.1
     )
-
+    
     return response.choices[0].message.content
 
 def process_source_references(text: str, title_to_url: Dict[str, str]) -> str:
@@ -589,13 +663,25 @@ def format_response_as_html(response_text: str, context_docs: List[Dict]) -> str
         html_output += '</div>'
     
     # Add references section
-    legislative_sources, web_sources = categorize_sources(context_docs)
+    legislative_sources, ato_guidance = categorize_and_prioritize_sources(context_docs)
     
     html_output += '<div class="section-container"><div class="section-header">📚 References</div>'
     
-    # Display web sources with URLs
+    # Display legislative sources first
     seen_sources = set()
-    for source in web_sources:
+    for source in legislative_sources:
+        source_key = f"{source['source']}_{source['title']}"
+        if source_key in seen_sources:
+            continue
+        seen_sources.add(source_key)
+        
+        if source['section']:
+            html_output += f'<div class="key-point">• {source["title"]} - {source["section"]}</div>'
+        else:
+            html_output += f'<div class="key-point">• {source["title"]} ({source["source"]})</div>'
+    
+    # Display ATO guidance with URLs
+    for source in ato_guidance:
         source_key = f"{source['source']}_{source['title']}"
         if source_key in seen_sources:
             continue
@@ -606,22 +692,13 @@ def format_response_as_html(response_text: str, context_docs: List[Dict]) -> str
         else:
             html_output += f'<div class="key-point">• {source["title"]}</div>'
     
-    # Display legislative sources
-    for ref in legislative_sources:
-        ref_key = f"{ref['source']}_{ref['title']}"
-        if ref_key in seen_sources:
-            continue
-        seen_sources.add(ref_key)
-        
-        html_output += f'<div class="key-point">• {ref["title"]} ({ref["source"]})</div>'
-    
     html_output += '</div>'
     
     # Add disclaimer
     html_output += """
     <div class="disclaimer">
-        <strong>⚠️ Important Notice:</strong> This information is for general guidance only and is based on current ATO documentation. 
-        Tax laws are complex and individual circumstances vary. For personalized advice, please consult a registered tax agent.
+    <strong>⚠️ Important Notice:</strong> This information is for general guidance only and is based on current ATO documentation. 
+    Tax laws are complex and individual circumstances vary. For personalized advice, please consult a registered tax agent.
     </div>
     """
     
@@ -633,61 +710,61 @@ async def process_query(query: str, collection, openai_client):
     if not is_tax_query:
         return """
         <div class="section-container">
-            <div class="section-header">⚠️ Out of Scope Query</div>
-            <div class="content-text">
-                <p>Koala Tax Assistant can only help with Australian taxation and ATO matters.</p>
-                <p><strong>I can help with:</strong></p>
-                <div class="key-point">• Australian tax laws and regulations</div>
-                <div class="key-point">• Tax returns and deductions</div>
-                <div class="key-point">• GST and income tax questions</div>
-                <div class="key-point">• Superannuation tax matters</div>
-                <div class="key-point">• Business tax obligations</div>
-                <div class="key-point">• Tax agent services</div>
-            </div>
-            <div class="content-text">
-                <p><strong>I cannot help with:</strong></p>
-                <div class="key-point">• Financial advice or investment recommendations</div>
-                <div class="key-point">• Non-Australian tax matters</div>
-                <div class="key-point">• General financial planning</div>
-                <div class="key-point">• Personal financial decisions</div>
-            </div>
-            <div class="content-text">
-                <p>Please ask a question about Australian taxation!</p>
-            </div>
+        <div class="section-header">⚠️ Out of Scope Query</div>
+        <div class="content-text">
+        <p>Koala Tax Assistant can only help with Australian taxation and ATO matters.</p>
+        <p><strong>I can help with:</strong></p>
+        <div class="key-point">• Australian tax laws and regulations</div>
+        <div class="key-point">• Tax returns and deductions</div>
+        <div class="key-point">• GST and income tax questions</div>
+        <div class="key-point">• Superannuation tax matters</div>
+        <div class="key-point">• Business tax obligations</div>
+        <div class="key-point">• Tax agent services</div>
+        </div>
+        <div class="content-text">
+        <p><strong>I cannot help with:</strong></p>
+        <div class="key-point">• Financial advice or investment recommendations</div>
+        <div class="key-point">• Non-Australian tax matters</div>
+        <div class="key-point">• General financial planning</div>
+        <div class="key-point">• Personal financial decisions</div>
+        </div>
+        <div class="content-text">
+        <p>Please ask a question about Australian taxation!</p>
+        </div>
         </div>
         """
 
     try:
-        enhanced_query = await enhance_query(openai_client, query)
+        enhanced_query = await enhance_query_with_context(openai_client, query)
         query_embedding = await get_embedding(enhanced_query, openai_client)
-        relevant_docs = search_documents(collection, query_embedding, limit=5)
+        relevant_docs = search_documents_filtered(collection, query_embedding, query, limit=8)
 
         if not relevant_docs:
             return """
             <div class="section-container">
-                <div class="section-header">❌ No Information Found</div>
-                <div class="content-text">
-                    <p>No relevant information found in ATO documentation</p>
-                    <p><strong>Suggestions:</strong></p>
-                    <div class="key-point">• Try rephrasing your question with specific tax terms</div>
-                    <div class="key-point">• Contact the ATO directly on <strong>13 28 61</strong></div>
-                    <div class="key-point">• Visit <a href="https://www.ato.gov.au" target="_blank" class="source-link">ato.gov.au</a> for comprehensive information</div>
-                </div>
+            <div class="section-header">❌ No Information Found</div>
+            <div class="content-text">
+            <p>No relevant information found in ATO documentation</p>
+            <p><strong>Suggestions:</strong></p>
+            <div class="key-point">• Try rephrasing your question with specific tax terms</div>
+            <div class="key-point">• Contact the ATO directly on <strong>13 28 61</strong></div>
+            <div class="key-point">• Visit <a href="https://www.ato.gov.au" target="_blank" class="source-link">ato.gov.au</a> for comprehensive information</div>
+            </div>
             </div>
             """
 
-        response_text = await generate_response(openai_client, query, relevant_docs)
+        response_text = await generate_enhanced_response(openai_client, query, relevant_docs)
         return format_response_as_html(response_text, relevant_docs)
 
     except Exception as e:
         logger.error(f"Query processing error: {e}")
         return f"""
         <div class="section-container">
-            <div class="section-header">⚠️ Error</div>
-            <div class="content-text">
-                <p>An error occurred while processing your query: {str(e)}</p>
-                <p>Please try again or contact the ATO directly for assistance.</p>
-            </div>
+        <div class="section-header">⚠️ Error</div>
+        <div class="content-text">
+        <p>An error occurred while processing your query: {str(e)}</p>
+        <p>Please try again or contact the ATO directly for assistance.</p>
+        </div>
         </div>
         """
 
@@ -695,12 +772,12 @@ def main():
     st.markdown("# 🐨 Koala Tax Assistant")
     st.markdown("*Your professional guide to Australian taxation law and ATO guidance*")
     st.markdown(
-    """
-    **Important Note:** This is a RAG (Retrieval Augmented Generation) application developed using a limited dataset
-    sourced from the ATO website and selected Australian tax legislation (including relevant sections of the Corporations Act).
-    As such, it may not provide exhaustive or fully comprehensive answers, nor should it be considered a substitute for professional
-    tax advice. This tool may also not perform accurate calculations. It is currently a proof of concept.
-    """)
+        """
+        **Important Note:** This is a RAG (Retrieval Augmented Generation) application developed using a limited dataset
+        sourced from the ATO website and selected Australian tax legislation (including relevant sections of the Corporations Act).
+        As such, it may not provide exhaustive or fully comprehensive answers, nor should it be considered a substitute for professional
+        tax advice. This tool may also not perform accurate calculations. It is currently a proof of concept.
+        """)
 
     collection, openai_client = init_connections()
     if not collection or not openai_client:
@@ -785,4 +862,4 @@ def main():
 if __name__ == "__main__":
     main()
 
-print("Koala Tax Assistant application code created successfully!")
+print("Enhanced Koala Tax Assistant application code created successfully!")
