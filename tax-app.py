@@ -29,102 +29,116 @@ st.set_page_config(
     initial_sidebar_state="collapsed"
 )
 
-# Clean, professional CSS
+# Clean, professional CSS - UPDATED
 st.markdown("""
 <style>
+    /* Define a professional, cross-platform font stack */
+    :root {
+        --app-font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'Noto Sans', sans-serif;
+    }
+
+    /* Apply font globally and improve text rendering */
+    .main, .content-text, .key-point, .section-header, .file-note-header, .chat-message {
+        font-family: var(--app-font-family);
+        text-rendering: optimizeLegibility;
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+    }
+
     .main {
-    max-width: 1000px;
-    margin: 0 auto;
-    padding: 20px;
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+        max-width: 1000px;
+        margin: 0 auto;
+        padding: 20px;
     }
 
     /* Chat message styling */
     .chat-message {
-    background-color: #1e1e1e;
-    border-radius: 10px;
-    padding: 15px;
-    margin-bottom: 15px;
-    color: #ffff;
+        background-color: #1e1e1e;
+        border-radius: 10px;
+        padding: 15px;
+        margin-bottom: 15px;
+        color: #ffffff;
     }
 
     .user-message {
-    background-color: #1e1e1e;
-    border: 1px solid #383838;
+        background-color: #1e1e1e;
+        border: 1px solid #383838;
     }
 
     .assistant-message {
-    background-color: #1e1e1e;
-    border: 1px solid #383838;
+        background-color: #1e1e1e;
+        border: 1px solid #383838;
     }
 
     /* File note styling */
     .file-note-header {
-    font-size: 1.1rem;
-    font-weight: 600;
-    color: #e0e0e0;
-    margin-bottom: 10px;
-    padding-bottom: 8px;
-    border-bottom: 1px solid #3b82f6;
+        font-size: 1.1rem;
+        font-weight: 600;
+        color: #e0e0e0;
+        margin-bottom: 10px;
+        padding-bottom: 8px;
+        border-bottom: 1px solid #3b82f6;
     }
 
     .section-container {
-    background-color: #1e1e1e;
-    border-radius: 8px;
-    padding: 15px;
-    margin-bottom: 15px;
-    border: 1px solid #383838;
+        background-color: #1e1e1e;
+        border-radius: 8px;
+        padding: 15px;
+        margin-bottom: 15px;
+        border: 1px solid #383838;
     }
 
     .section-header {
-    font-size: 1rem;
-    font-weight: 600;
-    color: #e0e0e0;
-    margin-bottom: 10px;
-    padding-bottom: 5px;
-    border-bottom: 1px solid #3b82f6;
-    display: flex;
-    align-items: center;
-    gap: 8px;
+        font-size: 1rem;
+        font-weight: 600;
+        color: #e0e0e0;
+        margin-bottom: 10px;
+        padding-bottom: 5px;
+        border-bottom: 1px solid #3b82f6;
+        display: flex;
+        align-items: center;
+        gap: 8px;
     }
 
     .content-text {
-    font-size: 0.95rem;
-    line-height: 1.5;
-    color: #e0e0e0;
-    margin: 8px 0;
+        font-size: 0.95rem;
+        line-height: 1.6; /* Increased for readability */
+        color: #e0e0e0;
+        margin: 8px 0;
     }
 
     .key-point {
-    background-color: #2a2a2a;
-    padding: 10px 12px;
-    margin: 8px 0;
-    border-radius: 5px;
-    border-left: 3px solid #3b82f6;
+        background-color: #2a2a2a;
+        padding: 10px 12px;
+        margin: 8px 0;
+        border-radius: 5px;
+        border-left: 3px solid #3b82f6;
+        font-size: 0.95rem;
+        line-height: 1.6; /* Increased for readability */
     }
 
     .reference-citation {
-    font-size: 0.85rem;
-    color: #a0a0a0;
-    margin-top: 5px;
+        font-size: 0.85rem;
+        color: #a0a0a0;
+        margin-top: 5px;
     }
 
     .source-link {
-    color: #3b82f6;
-    text-decoration: none;
+        color: #3b82f6;
+        text-decoration: none;
     }
 
     .source-link:hover {
-    text-decoration: underline;
+        text-decoration: underline;
     }
 
     .confidence-badge {
-    display: inline-block;
-    padding: 4px 12px;
-    border-radius: 12px;
-    font-size: 0.85rem;
-    font-weight: 500;
-    margin: 8px 0;
+        display: inline-block;
+        padding: 4px 12px;
+        border-radius: 12px;
+        font-size: 0.85rem;
+        font-weight: 500;
+        margin: 8px 0;
     }
 
     .confidence-high { background: #166534; color: #dcfce7; }
@@ -132,66 +146,67 @@ st.markdown("""
     .confidence-low { background: #991b1b; color: #fee2e2; }
 
     .disclaimer {
-    font-size: 0.85rem;
-    color: #a0a0a0;
-    margin-top: 15px;
-    padding: 10px;
-    border: 1px solid #383838;
-    border-radius: 5px;
-    background-color: #2a2a2a;
+        font-size: 0.85rem;
+        color: #a0a0a0;
+        margin-top: 15px;
+        padding: 10px;
+        border: 1px solid #383838;
+        border-radius: 5px;
+        background-color: #2a2a2a;
+        line-height: 1.5;
     }
 
     /* Hide Streamlit elements */
     .stChatMessage {
-    background-color: transparent !important;
-    padding: 0 !important;
-    margin: 0 !important;
+        background-color: transparent !important;
+        padding: 0 !important;
+        margin: 0 !important;
     }
 
     .stChatMessage [data-testid="stChatMessageContent"] {
-    background-color: transparent !important;
-    padding: 0 !important;
+        background-color: transparent !important;
+        padding: 0 !important;
     }
 
     /* Remove extra padding */
     .element-container:empty {
-    display: none !important;
+        display: none !important;
     }
 
     /* Custom scrollbar */
     ::-webkit-scrollbar {
-    width: 8px;
-    height: 8px;
+        width: 8px;
+        height: 8px;
     }
 
     ::-webkit-scrollbar-track {
-    background: #1e1e1e;
+        background: #1e1e1e;
     }
 
     ::-webkit-scrollbar-thumb {
-    background: #3b82f6;
-    border-radius: 4px;
+        background: #3b82f6;
+        border-radius: 4px;
     }
 
     ::-webkit-scrollbar-thumb:hover {
-    background: #2563eb;
+        background: #2563eb;
     }
 
     /* Error message styling */
     .error-message {
-    background-color: #2a2a2a;
-    border-left: 3px solid #ef4444;
-    padding: 10px 12px;
-    margin: 8px 0;
-    border-radius: 5px;
+        background-color: #2a2a2a;
+        border-left: 3px solid #ef4444;
+        padding: 10px 12px;
+        margin: 8px 0;
+        border-radius: 5px;
     }
 
     .warning-message {
-    background-color: #2a2a2a;
-    border-left: 3px solid #f59e0b;
-    padding: 10px 12px;
-    margin: 8px 0;
-    border-radius: 5px;
+        background-color: #2a2a2a;
+        border-left: 3px solid #f59e0b;
+        padding: 10px 12px;
+        margin: 8px 0;
+        border-radius: 5px;
     }
 </style>
 """, unsafe_allow_html=True)
@@ -473,7 +488,7 @@ Format your response with the following sections:
 6. Confidence Level: High/Moderate/Low with detailed explanation
 
 CITATION REQUIREMENTS:
-- When referencing a source, use the format: [source: Title of Document]
+- When referencing a source, use the format: 
 - Be consistent with document titles as they appear in the context
 - Include specific section numbers, ruling numbers, or determination references where available
 
@@ -485,7 +500,11 @@ ACCURACY REQUIREMENTS:
 
     messages = [
         {"role": "system", "content": system_prompt},
-        {"role": "user", "content": f"Query: {query} Context:{context_text}"} ]
+        {"role": "user", "content": f"Query: {query}
+
+Context:
+{context_text}"}
+    ]
 
     response = await client.chat.completions.create(
         model="gpt-4o-mini",
@@ -497,7 +516,7 @@ ACCURACY REQUIREMENTS:
     return response.choices[0].message.content
 
 def process_source_references(text: str, title_to_url: Dict[str, str]) -> str:
-    """Process text to convert [source: title] references to clickable links."""
+    """Process text to convert references to clickable links."""
 
     def replace_source_ref(match):
         source_title = match.group(1).strip()
@@ -511,8 +530,8 @@ def process_source_references(text: str, title_to_url: Dict[str, str]) -> str:
         else:
             return source_title
 
-    # Replace all [source: title] patterns with clickable links where URLs are available
-    processed_text = re.sub(r'\[source:\s*([^\]]+)\]', replace_source_ref, text)
+    # Replace all patterns with clickable links where URLs are available
+    processed_text = re.sub(r'\]+)\]', replace_source_ref, text)
 
     return processed_text
 
@@ -527,8 +546,8 @@ def format_response_as_html(response_text: str, context_docs: List[Dict]) -> str
     title_to_url = create_title_url_mapping(context_docs)
 
     # FIRST: Handle any markdown-style links that might have been generated
-    # Convert [source: title](url) to just [source: title]
-    clean_text = re.sub(r'\[source: ([^\]]+)\]\([^)]+\)', r'[source: \1]', clean_text)
+    # Convert (url) to just 
+    clean_text = re.sub(r'\]+)\]\([^)]+\)', r'', clean_text)
 
     # Split into sections
     sections = re.split(r'\n\s*(?=Overview:|Key Information:|Legislation or ATO Reference:|Analysis:|Conclusion:|Confidence Level:|References:)', clean_text)
@@ -591,7 +610,7 @@ def format_response_as_html(response_text: str, context_docs: List[Dict]) -> str
             for line in lines:
                 line = line.strip()
                 if line and line.startswith('•'):
-                    # Process the line to convert [source: title] to clickable links
+                    # Process the line to convert to clickable links
                     processed_line = process_source_references(line, title_to_url)
                     html_output += f'<div class="key-point">{processed_line}</div>'
                 elif line:
