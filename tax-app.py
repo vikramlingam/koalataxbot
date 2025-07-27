@@ -218,109 +218,42 @@ async def get_embedding(text: str, client: AsyncOpenAI) -> List[float]:
     )
     return response.data[0].embedding
 
-def score_document_relevance(doc: Dict, query: str) -> float:
-    """Score document relevance based on content and source type."""
-    content = doc.get('text_content', '').lower()
-    source = doc.get('source_info', '').lower()
-    title = doc.get('title', '').lower()
-    
-    score = 0.0
-    
-    # Boost score for legislative sources
-    if any(term in source.upper() for term in ['ACT', 'SECT', 'ITAA', 'FBTAA', 'GST ACT', 'TAA']):
-        score += 2.0
-    
-    # Boost for specific section references
-    if re.search(r'section \d+|division \d+|subsection \d+\(\d+\)', content):
-        score += 1.5
-    
-    # Penalize irrelevant topics
-    query_lower = query.lower()
-    irrelevant_mappings = {
-        'entertainment': ['transfer pricing', 'thin capitalisation', 'international tax'],
-        'gst': ['income tax', 'capital gains'],
-        'individual': ['company tax', 'corporate'],
-    }
-    
-    for topic, irrelevant_terms in irrelevant_mappings.items():
-        if topic in query_lower:
-            for irrelevant in irrelevant_terms:
-                if irrelevant in content:
-                    score -= 2.0
-    
-    # Boost for exact keyword matches
-    keywords = query_lower.split()
-    for keyword in keywords:
-        if keyword in content:
-            score += 0.3
-    
-    return score
-
-def search_documents_filtered(collection, query_embedding: List[float], query: str, limit: int = 8) -> List[Dict]:
-    """Search with relevance filtering and re-ranking."""
+def search_documents(collection, query_embedding: List[float], limit: int = 5) -> List[Dict]:
     try:
-        # Get more results initially
         results = collection.vector_find(
             vector=query_embedding,
-            limit=limit * 2,  # Get more to filter
+            limit=limit,
             fields=["_id", "title", "text_content", "source_info", "document_id", "chunk_order"]
         )
-        
-        # Score and re-rank
-        scored_results = [(doc, score_document_relevance(doc, query)) for doc in results]
-        scored_results.sort(key=lambda x: x[1], reverse=True)
-        
-        # Return top results
-        return [doc for doc, score in scored_results[:limit] if score > -1]
-        
+        return list(results)
     except Exception as e:
         logger.error(f"Search error: {e}")
         return []
 
-async def enhance_query_with_context(client: AsyncOpenAI, query: str) -> str:
-    """Enhance query with specific legislative context."""
-    
-    # Map common queries to specific legislative sections
-    query_mappings = {
-        'entertainment': 'entertainment expenses FBT deductibility ITAA 1997 section 32-5',
-        'meal': 'meal entertainment fringe benefits tax FBTAA 1986',
-        'company tax': 'company tax rates ITAA 1936 section 23',
-        'gst': 'goods and services tax GST Act 1999',
-        'capital gains': 'capital gains tax CGT ITAA 1997',
-        'superannuation': 'superannuation guarantee SGAA 1992',
-        'fringe benefits': 'fringe benefits tax FBTAA 1986',
-        'deduction': 'tax deductions ITAA 1997 Division 8',
-        'depreciation': 'depreciation capital allowances ITAA 1997 Division 40',
-    }
-    
-    query_lower = query.lower()
-    
-    # Check for specific mappings
-    for key, enhancement in query_mappings.items():
-        if key in query_lower:
-            return f"{query} {enhancement}"
-    
-    # Default enhancement
-    enhancement_prompt = """Enhance this Australian tax query by adding specific legislative references and ATO terms. Focus on the most relevant legislation.
+async def enhance_query(client: AsyncOpenAI, query: str) -> str:
+    enhancement_prompt = """Rephrase this tax question to be more specific and searchable for Australian taxation documents. 
+Focus on key ATO terms and concepts. Keep it concise but precise.
 
 Examples:
-- "entertainment" → "entertainment expenses tax treatment ITAA 1997 section 32-5 FBTAA 1986"
-- "company tax" → "company income tax rates ITAA 1936 section 23"
-- "GST registration" → "GST registration requirements GST Act 1999 Division 23"
+"tax rates" → "individual income tax rates Australia 2025-26"
+"GST" → "goods and services tax registration requirements"
+"super" → "superannuation contribution limits tax deduction"
 
-Return only the enhanced query."""
-    
+Return only the enhanced query, no explanation."""
+
     response = await client.chat.completions.create(
         model="gpt-4o-mini",
         messages=[
             {"role": "system", "content": enhancement_prompt},
             {"role": "user", "content": query}
         ],
-        max_tokens=150,
+        max_tokens=250,
         temperature=0.1
     )
-    
-    return response.choices[0].message.content.strip()
+
+    enhanced = response.choices[0].message.content.strip()
+    logger.info(f"Enhanced query: {query} → {enhanced}")
+    return enhanced
 
 async def check_query_intent(client: AsyncOpenAI, query: str) -> bool:
     # This function is now more permissive for tax-related queries
@@ -345,8 +278,8 @@ async def check_query_intent(client: AsyncOpenAI, query: str) -> bool:
     # If no keywords found, use the AI to check intent
     intent_prompt = """Is this query about Australian taxation or ATO matters? Answer only "yes" or "no".
 
-    YES: Australian tax laws, ATO procedures, tax rates, GST, income tax, capital gains, superannuation tax, business tax, tax deductions, tax returns, tax agents, tax exemptions, tax concessions
-    NO: Financial advice, investment recommendations, non-Australian tax, general chat, personal financial planning that's not tax-related"""
+YES: Australian tax laws, ATO procedures, tax rates, GST, income tax, capital gains, superannuation tax, business tax, tax deductions, tax returns, tax agents, tax exemptions, tax concessions
+NO: Financial advice, investment recommendations, non-Australian tax, general chat, personal financial planning that's not tax-related"""
 
     response = await client.chat.completions.create(
         model="gpt-4o-mini",
@@ -398,59 +331,34 @@ def extract_title_from_source(source: str) -> str:
     # Otherwise return the source as is
     return source
 
-def categorize_and_prioritize_sources(context_docs: List[Dict]) -> tuple:
-    """Categorize and prioritize sources by relevance."""
-    
+def categorize_sources(context_docs: List[Dict]) -> tuple:
     legislative_sources = []
-    ato_guidance = []
-    general_sources = []
-    
+    web_sources = []
+
     for doc in context_docs:
         source = doc.get('source_info', '')
         title = doc.get('title', '')
         content = doc.get('text_content', '')
-        
-        source_upper = source.upper()
-        
-        # Legislative sources (highest priority)
-        if any(term in source_upper for term in ['ITAA 1997', 'ITAA 1936', 'FBTAA 1986', 'GST ACT', 'TAA 1953']):
-            # Extract specific section references
-            section_match = re.search(r'(section|division|subsection)\s+[\d\(\)]+', content, re.IGNORECASE)
-            section_ref = section_match.group(0) if section_match else ''
-            
+
+        if 'ACT' in source.upper() and 'SECT' in source.upper():
             legislative_sources.append({
                 'title': title,
                 'source': source,
-                'content': content,
-                'section': section_ref,
-                'priority': 3
+                'content': content
             })
-        
-        # ATO guidance (medium priority)
-        elif 'ato.gov.au' in source.lower() or 'ato' in title.lower():
-            ato_guidance.append({
-                'title': title,
-                'source': source,
-                'content': content,
-                'url': extract_url_from_source(source),
-                'priority': 2
-            })
-        
-        # General sources (lowest priority)
         else:
-            ato_guidance.append({
-                'title': title,
+            url = extract_url_from_source(source)
+            # If we have a title from the document, use it, otherwise extract from source
+            display_title = title if title and title != 'Unknown' else extract_title_from_source(source)
+            
+            web_sources.append({
+                'title': display_title,
                 'source': source,
                 'content': content,
-                'url': extract_url_from_source(source),
-                'priority': 1
+                'url': url
             })
-    
-    # Sort by priority
-    all_sources = legislative_sources + ato_guidance
-    all_sources.sort(key=lambda x: x['priority'], reverse=True)
-    
-    return legislative_sources, ato_guidance
+
+    return legislative_sources, web_sources
 
 def create_title_url_mapping(context_docs: List[Dict]) -> Dict[str, str]:
     """Create a comprehensive mapping of titles to URLs from context documents."""
@@ -488,65 +396,54 @@ def create_title_url_mapping(context_docs: List[Dict]) -> Dict[str, str]:
     
     return title_to_url
 
-async def generate_enhanced_response(client: AsyncOpenAI, query: str, context_docs: List[Dict]) -> str:
-    """Generate response with better source prioritization."""
-    
-    # Filter and prioritize documents
-    legislative, ato_guidance = categorize_and_prioritize_sources(context_docs)
-    
-    # Build context with priority
-    context_parts = []
-    
-    # Add legislative sources first
-    for doc in legislative[:3]:  # Top 3 legislative
-        context_parts.append(f"""
-LEGISLATION: {doc['title']}
-Section: {doc['section']}
-Source: {doc['source']}
-Content: {doc['content']}
-""")
-    
-    # Add ATO guidance
-    for doc in ato_guidance[:3]:  # Top 3 ATO
-        context_parts.append(f"""
-ATO GUIDANCE: {doc['title']}
-URL: {doc['url']}
-Content: {doc['content']}
-""")
-    
-    context_text = "\n---\n".join(context_parts)
-    
-    # Updated system prompt
-    system_prompt = """You are a professional tax advisor specializing in Australian taxation law. Provide accurate responses based on Australian tax legislation and ATO guidance.
+async def generate_response(client: AsyncOpenAI, query: str, context_docs: List[Dict]) -> str:
+    context_text = ""
+    for i, doc in enumerate(context_docs, 1):
+        source = doc.get('source_info', 'Unknown')
+        title = doc.get('title', 'Unknown')
+        content = doc.get('text_content', '')
+        url = extract_url_from_source(source)
 
-CRITICAL RULES:
-1. Prioritize legislative references (ITAA 1997, ITAA 1936, FBTAA 1986, GST Act) over general guidance
-2. Include specific section numbers when available
-3. For entertainment expenses, reference ITAA 1997 Division 32 and FBTAA 1986
-4. Exclude irrelevant topics like transfer pricing unless specifically asked
-5. Provide direct links to ATO website sections
-6. Always reference the most current legislation and rates
+        context_text += f"""
+Document {i}:
+Source: {source}
+Title: {title}
+URL: {url}
+Content: {content}
+---
+"""
 
-Format as professional file note with:
-- Overview
-- Key Information (with specific legislative references)
-- Legislation/ATO Reference (with section numbers)
-- Analysis
-- Conclusion
-- Confidence Level"""
+    system_prompt = """You are a professional tax advisor specializing in Australian taxation law. Your task is to provide accurate, specific, and well-structured responses based on the Australian Taxation Office (ATO) website and Australian tax legislation.
+
+CRITICAL INSTRUCTIONS:
+1. Provide SPECIFIC rates, thresholds, and amounts when asked about tax rates
+2. Include exact figures and percentages from the provided context
+3. Reference specific legislation sections and ATO guidance documents
+4. Include direct URLs to ATO website sections when available
+5. Do not give generic responses - provide the actual data requested
+
+Format your response as a professional file note with the following sections:
+1. Overview: A concise summary of the query and main findings (2-3 sentences)
+2. Key Information: The most important points with specific rates, amounts, and thresholds
+3. Legislation or ATO Reference: Specific sections of legislation or ATO guidance with URLs
+4. Analysis: Your professional interpretation of how the law applies
+5. Conclusion: A clear summary of the answer
+6. Confidence Level: High/Moderate/Low with explanation
+
+IMPORTANT: When asked about tax rates, provide the actual rates and thresholds, not general statements about where to find them."""
 
     messages = [
         {"role": "system", "content": system_prompt},
         {"role": "user", "content": f"Query: {query}\n\nContext:\n{context_text}"}
     ]
-    
+
     response = await client.chat.completions.create(
         model="gpt-4o-mini",
         messages=messages,
-        max_tokens=2000,
+        max_tokens=2100,
         temperature=0.1
     )
-    
+
     return response.choices[0].message.content
 
 def process_source_references(text: str, title_to_url: Dict[str, str]) -> str:
@@ -663,25 +560,13 @@ def format_response_as_html(response_text: str, context_docs: List[Dict]) -> str
         html_output += '</div>'
     
     # Add references section
-    legislative_sources, ato_guidance = categorize_and_prioritize_sources(context_docs)
+    legislative_sources, web_sources = categorize_sources(context_docs)
     
     html_output += '<div class="section-container"><div class="section-header">📚 References</div>'
     
-    # Display legislative sources first
+    # Display web sources with URLs
     seen_sources = set()
-    for source in legislative_sources:
-        source_key = f"{source['source']}_{source['title']}"
-        if source_key in seen_sources:
-            continue
-        seen_sources.add(source_key)
-        
-        if source['section']:
-            html_output += f'<div class="key-point">• {source["title"]} - {source["section"]}</div>'
-        else:
-            html_output += f'<div class="key-point">• {source["title"]} ({source["source"]})</div>'
-    
-    # Display ATO guidance with URLs
-    for source in ato_guidance:
+    for source in web_sources:
         source_key = f"{source['source']}_{source['title']}"
         if source_key in seen_sources:
             continue
@@ -691,6 +576,15 @@ def format_response_as_html(response_text: str, context_docs: List[Dict]) -> str
             html_output += f'<div class="key-point">• <a href="{source["url"]}" target="_blank" class="source-link">{source["title"]}</a></div>'
         else:
             html_output += f'<div class="key-point">• {source["title"]}</div>'
+    
+    # Display legislative sources
+    for ref in legislative_sources:
+        ref_key = f"{ref['source']}_{ref['title']}"
+        if ref_key in seen_sources:
+            continue
+        seen_sources.add(ref_key)
+        
+        html_output += f'<div class="key-point">• {ref["title"]} ({ref["source"]})</div>'
     
     html_output += '</div>'
     
@@ -735,9 +629,9 @@ async def process_query(query: str, collection, openai_client):
         """
 
     try:
-        enhanced_query = await enhance_query_with_context(openai_client, query)
+        enhanced_query = await enhance_query(openai_client, query)
         query_embedding = await get_embedding(enhanced_query, openai_client)
-        relevant_docs = search_documents_filtered(collection, query_embedding, query, limit=8)
+        relevant_docs = search_documents(collection, query_embedding, limit=5)
 
         if not relevant_docs:
             return """
@@ -753,7 +647,7 @@ async def process_query(query: str, collection, openai_client):
             </div>
             """
 
-        response_text = await generate_enhanced_response(openai_client, query, relevant_docs)
+        response_text = await generate_response(openai_client, query, relevant_docs)
         return format_response_as_html(response_text, relevant_docs)
 
     except Exception as e:
@@ -862,4 +756,4 @@ def main():
 if __name__ == "__main__":
     main()
 
-print("Enhanced Koala Tax Assistant application code created successfully!")
+print("Koala Tax Assistant application code created successfully!")
