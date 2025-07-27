@@ -220,7 +220,7 @@ async def get_embedding(text: str, client: AsyncOpenAI) -> List[float]:
     )
     return response.data[0].embedding
 
-def search_documents(collection, query_embedding: List[float], limit: int = 9) -> List[Dict]:
+def search_documents(collection, query_embedding: List[float], limit: int = 5) -> List[Dict]:
     try:
         results = collection.vector_find(
             vector=query_embedding,
@@ -249,7 +249,7 @@ async def enhance_query(client: AsyncOpenAI, query: str) -> str:
             {"role": "system", "content": enhancement_prompt},
             {"role": "user", "content": query}
         ],
-        max_tokens=150,
+        max_tokens=250,
         temperature=0.1
     )
 
@@ -467,9 +467,9 @@ Confidence Level: [High/Moderate/Low] - [Brief explanation of confidence assessm
     ]
 
     response = await client.chat.completions.create(
-        model="gpt-4o",
+        model="gpt-4o-mini",
         messages=messages,
-        max_tokens=1800,
+        max_tokens=2100,
         temperature=0.1
     )
 
@@ -660,7 +660,7 @@ async def process_query(query: str, collection, openai_client):
     try:
         enhanced_query = await enhance_query(openai_client, query)
         query_embedding = await get_embedding(enhanced_query, openai_client)
-        relevant_docs = search_documents(collection, query_embedding, limit=7)
+        relevant_docs = search_documents(collection, query_embedding, limit=5)
 
         if not relevant_docs:
             return """
