@@ -256,31 +256,18 @@ Return only the enhanced query, no explanation."""
     return enhanced
 
 async def check_query_intent(client: AsyncOpenAI, query: str) -> bool:
-    # This function is now more permissive for tax-related queries
-    # We'll assume most queries are tax-related unless they clearly aren't
-    
-    # List of keywords that strongly indicate a tax-related query
     tax_keywords = [
-        "tax", "ato", "gst", "income", "deduction", "superannuation", "super", "pillar 2", "pillar two", "IDS", "GloBE", "BEPS",
-        "capital gains", "cgt", "fringe benefits", "fbt", "business", "depreciation", "amortisation", "thin capitalisation", "losses",
-        "dividend", "offset", "rebate", "lodgment", "return", "assessment", "exemption", "deductions", "audit", "individual",
-        "withholding", "payg", "medicare", "levy", "concession", "allowance", "expense", "useful life",
-        "claim", "refund", "audit", "ruling", "legislation", "act", "section", "division",
-        "resident", "non-resident", "foreign", "trust", "partnership", "company", "sole trader"
+        "tax", "ato", "gst", "income", "deduction", "superannuation", "super", "capital gains", "cgt", 
+        "fringe benefits", "fbt", "business", "depreciation", "company", "entertainment", "meal"
     ]
     
-    # Check if any tax keywords are in the query
     query_lower = query.lower()
     for keyword in tax_keywords:
         if keyword in query_lower:
             return True
     
-    # If no keywords found, use the AI to check intent
-    intent_prompt = """Is this query about Australian taxation or ATO matters? Answer only "yes" or "no".
-
-YES: Australian tax laws, ATO procedures, tax rates, GST, income tax, capital gains, superannuation tax, business tax, tax deductions, tax returns, tax agents, tax exemptions, tax concessions
-NO: Financial advice, investment recommendations, non-Australian tax, general chat, personal financial planning that's not tax-related"""
-
+    intent_prompt = """Is this query about Australian taxation or ATO matters? Answer only "yes" or "no"."""
+    
     response = await client.chat.completions.create(
         model="gpt-4o-mini",
         messages=[
@@ -298,16 +285,13 @@ def extract_url_from_source(source: str) -> str:
     if not source:
         return ""
 
-    # Check if the source is already a URL
     if source.startswith(('http://', 'https://')):
         return source
 
-    # Extract URL from text with parentheses or brackets
     url_match = re.search(r'(https?://[^\s\)\]\,]+)', source)
     if url_match:
         return url_match.group(1)
 
-    # For ATO sources without http prefix
     if 'ato.gov.au' in source.lower() and not source.startswith('http'):
         clean_source = source.replace('Source: ', '').strip()
         if not clean_source.startswith('http'):
@@ -316,19 +300,15 @@ def extract_url_from_source(source: str) -> str:
     return ""
 
 def extract_title_from_source(source: str) -> str:
-    """Extract a clean title from a source string."""
-    # If source contains a URL in parentheses or brackets, extract the text before it
     url_match = re.search(r'(.*?)[\(\[]https?://.*?[\)\]]', source)
     if url_match:
         return url_match.group(1).strip()
     
-    # If source is a URL, use the domain name as title
     if source.startswith(('http://', 'https://')):
         domain_match = re.search(r'https?://(?:www\.)?([^/]+)', source)
         if domain_match:
             return domain_match.group(1)
     
-    # Otherwise return the source as is
     return source
 
 def categorize_sources(context_docs: List[Dict]) -> tuple:
@@ -340,7 +320,7 @@ def categorize_sources(context_docs: List[Dict]) -> tuple:
         title = doc.get('title', '')
         content = doc.get('text_content', '')
 
-        if 'ACT' in source.upper() and 'SECT' in source.upper():
+        if any(term in source.upper() for term in ['ACT', 'SECT', 'ITAA', 'FBTAA', 'GST']):
             legislative_sources.append({
                 'title': title,
                 'source': source,
@@ -348,7 +328,6 @@ def categorize_sources(context_docs: List[Dict]) -> tuple:
             })
         else:
             url = extract_url_from_source(source)
-            # If we have a title from the document, use it, otherwise extract from source
             display_title = title if title and title != 'Unknown' else extract_title_from_source(source)
             
             web_sources.append({
@@ -360,77 +339,119 @@ def categorize_sources(context_docs: List[Dict]) -> tuple:
 
     return legislative_sources, web_sources
 
-def create_title_url_mapping(context_docs: List[Dict]) -> Dict[str, str]:
-    """Create a comprehensive mapping of titles to URLs from context documents."""
+def create_comprehensive_url_mapping(context_docs: List[Dict]) -> Dict[str, str]:
+    """Create comprehensive mapping including legislation and ATO guidance."""
     title_to_url = {}
     
     for doc in context_docs:
         title = doc.get('title', '').strip()
         source = doc.get('source_info', '').strip()
         
-        if not title or title == 'Unknown':
+        if not title:
             continue
         
-        # Extract URL from source
+        # Extract URL
         url = extract_url_from_source(source)
         
         if url:
-            # Add exact title match
-            title_to_url[title] = url
+            # Add multiple variations for matching
+            variations = [title]
             
-            # Add variations of the title for better matching
-            # Remove common prefixes/suffixes
+            # Clean title variations
             clean_title = re.sub(r'^(source:\s*|title:\s*)', '', title, flags=re.IGNORECASE).strip()
             if clean_title != title:
-                title_to_url[clean_title] = url
+                variations.append(clean_title)
             
-            # Handle titles with pipe separators (like "Title | Australian Taxation Office")
+            # Handle pipe separators
             if '|' in title:
-                main_title = title.split('|')[0].strip()
-                title_to_url[main_title] = url
+                variations.append(title.split('|')[0].strip())
             
-            # Handle titles with common ATO patterns
+            # Handle ATO patterns
             if 'Australian Taxation Office' in title:
-                short_title = title.replace('| Australian Taxation Office', '').strip()
-                title_to_url[short_title] = url
+                variations.append(title.replace('| Australian Taxation Office', '').strip())
+            
+            # Add all variations
+            for variation in variations:
+                title_to_url[variation] = url
     
     return title_to_url
 
+def process_all_references(text: str, context_docs: List[Dict]) -> str:
+    """Process all references including legislation and ATO guidance."""
+    title_to_url = create_comprehensive_url_mapping(context_docs)
+    
+    def replace_reference(match):
+        ref_text = match.group(0)
+        
+        # Check for section references
+        section_match = re.search(r'(Section|Division)\s+([\d\-]+)', ref_text, re.IGNORECASE)
+        if section_match:
+            section = section_match.group(0)
+            # Try to find matching legislation
+            for title, url in title_to_url.items():
+                if 'ITAA' in title or 'FBTAA' in title or 'GST' in title:
+                    return f'<a href="{url}" target="_blank" class="source-link">{ref_text}</a>'
+        
+        # Check for ATO guidance references
+        ato_patterns = ['ATO', 'Australian Taxation Office', 'ato.gov.au']
+        for pattern in ato_patterns:
+            if pattern.lower() in ref_text.lower():
+                for title, url in title_to_url.items():
+                    if 'ato' in title.lower():
+                        return f'<a href="{url}" target="_blank" class="source-link">{ref_text}</a>'
+        
+        # Check for exact title matches
+        for title, url in title_to_url.items():
+            if title.lower() in ref_text.lower() or ref_text.lower() in title.lower():
+                return f'<a href="{url}" target="_blank" class="source-link">{ref_text}</a>'
+        
+        return ref_text
+    
+    # Process various reference patterns
+    text = re.sub(r'(Section|Division)\s+[\d\-]+[\w\(\)]*', replace_reference, text, flags=re.IGNORECASE)
+    text = re.sub(r'ATO\s+Guidance:[^<\n]*', replace_reference, text, flags=re.IGNORECASE)
+    text = re.sub(r'\[([^\]]+)\]', lambda m: f'[<a href="#" class="source-link">{m.group(1)}</a>]' if m.group(1) in title_to_url else m.group(0), text)
+    
+    return text
+
 async def generate_response(client: AsyncOpenAI, query: str, context_docs: List[Dict]) -> str:
     context_text = ""
+    url_mapping = {}
+    
     for i, doc in enumerate(context_docs, 1):
         source = doc.get('source_info', 'Unknown')
         title = doc.get('title', 'Unknown')
         content = doc.get('text_content', '')
         url = extract_url_from_source(source)
-
+        
+        if url:
+            url_mapping[title] = url
+        
         context_text += f"""
 Document {i}:
-Source: {source}
 Title: {title}
 URL: {url}
+Source: {source}
 Content: {content}
 ---
 """
 
-    system_prompt = """You are a professional tax advisor specializing in Australian taxation law. Your task is to provide accurate, specific, and well-structured responses based on the Australian Taxation Office (ATO) website and Australian tax legislation.
+    system_prompt = """You are a professional tax advisor specializing in Australian taxation law. Provide accurate, specific responses.
 
 CRITICAL INSTRUCTIONS:
-1. Provide SPECIFIC rates, thresholds, and amounts when asked about tax rates
-2. Include exact figures and percentages from the provided context
-3. Reference specific legislation sections and ATO guidance documents
-4. Include direct URLs to ATO website sections when available
-5. Do not give generic responses - provide the actual data requested
+1. Provide SPECIFIC rates, thresholds, and amounts when asked
+2. Include direct URLs to ATO website sections in your response
+3. Reference specific legislation sections with links where available
+4. Format URLs as clickable links in the text
+5. Use this format for references: [ATO Guidance](URL) or [Section 8-1 ITAA 1997](URL)
 
-Format your response as a professional file note with the following sections:
-1. Overview: A concise summary of the query and main findings (2-3 sentences)
-2. Key Information: The most important points with specific rates, amounts, and thresholds
-3. Legislation or ATO Reference: Specific sections of legislation or ATO guidance with URLs
-4. Analysis: Your professional interpretation of how the law applies
-5. Conclusion: A clear summary of the answer
-6. Confidence Level: High/Moderate/Low with explanation
-
-IMPORTANT: When asked about tax rates, provide the actual rates and thresholds, not general statements about where to find them."""
+Format as professional file note:
+1. Overview
+2. Key Information (with specific data)
+3. Legislation/ATO Reference (with embedded URLs)
+4. Analysis
+5. Conclusion
+6. Confidence Level"""
 
     messages = [
         {"role": "system", "content": system_prompt},
@@ -446,60 +467,73 @@ IMPORTANT: When asked about tax rates, provide the actual rates and thresholds, 
 
     return response.choices[0].message.content
 
-def process_source_references(text: str, title_to_url: Dict[str, str]) -> str:
-    """Process a line of text to convert [source: title] references to clickable links."""
+def format_response_with_links(response_text: str, context_docs: List[Dict]) -> str:
+    """Format response with proper URL linking throughout."""
     
-    def replace_source_ref(match):
-        source_title = match.group(1).strip()
+    # Create comprehensive URL mapping
+    title_to_url = {}
+    for doc in context_docs:
+        title = doc.get('title', '').strip()
+        source = doc.get('source_info', '').strip()
+        url = extract_url_from_source(source)
         
-        # Try exact match first
-        source_url = title_to_url.get(source_title, "")
-        
-        # If no exact match, try partial matching
-        if not source_url:
-            for title, url in title_to_url.items():
-                # Check if the source_title is contained in any of our known titles
-                if source_title.lower() in title.lower() or title.lower() in source_title.lower():
-                    source_url = url
-                    break
-        
-        # If we have a URL, make it clickable
-        if source_url:
-            return f'[source: <a href="{source_url}" target="_blank" class="source-link">{source_title}</a>]'
-        else:
-            return f'[source: {source_title}]'
+        if url and title:
+            title_to_url[title] = url
+            
+            # Add variations
+            clean_title = re.sub(r'^(source:\s*|title:\s*)', '', title, flags=re.IGNORECASE).strip()
+            if '|' in clean_title:
+                main_title = clean_title.split('|')[0].strip()
+                title_to_url[main_title] = url
     
-    # Replace all [source: title] patterns with clickable links where URLs are available
-    processed_text = re.sub(r'\[source:\s*([^\]]+)\]', replace_source_ref, text)
+    def replace_with_links(text):
+        # Replace [source: title] with clickable links
+        def replace_source_ref(match):
+            source_title = match.group(1).strip()
+            url = title_to_url.get(source_title, "")
+            if url:
+                return f'<a href="{url}" target="_blank" class="source-link">{source_title}</a>'
+            return source_title
+        
+        text = re.sub(r'\[source:\s*([^\]]+)\]', replace_source_ref, text)
+        
+        # Replace legislation references
+        legislation_patterns = [
+            (r'(Income Tax Assessment Act 1997)', 'https://www.legislation.gov.au/Series/C2004A00818'),
+            (r'(ITAA 1997)', 'https://www.legislation.gov.au/Series/C2004A00818'),
+            (r'(Fringe Benefits Tax Assessment Act 1986)', 'https://www.legislation.gov.au/Series/C2004A01587'),
+            (r'(FBTAA 1986)', 'https://www.legislation.gov.au/Series/C2004A01587'),
+            (r'(Section 8-1)', 'https://www.legislation.gov.au/Details/C2024C00021/Html/Text#_Toc163895954'),
+            (r'(Section 32-5)', 'https://www.legislation.gov.au/Details/C2024C00021/Html/Text#_Toc163896245'),
+        ]
+        
+        for pattern, url in legislation_patterns:
+            text = re.sub(pattern, f'<a href="{url}" target="_blank" class="source-link">\\1</a>', text, flags=re.IGNORECASE)
+        
+        # Replace ATO references
+        ato_patterns = [
+            (r'ATO Guidance: ([^<\n]*)', 'https://www.ato.gov.au/business/fringe-benefits-tax/'),
+            (r'ATO website', 'https://www.ato.gov.au'),
+        ]
+        
+        for pattern, url in ato_patterns:
+            text = re.sub(pattern, f'<a href="{url}" target="_blank" class="source-link">\\1</a>', text, flags=re.IGNORECASE)
+        
+        return text
     
-    return processed_text
-
-def format_response_as_html(response_text: str, context_docs: List[Dict]) -> str:
-    """Format the response as HTML to be displayed in the chat interface."""
-    # Clean up any markdown formatting
-    clean_text = re.sub(r'\*\*(.*?)\*\*', r'\1', response_text)
-    clean_text = re.sub(r'#{1,6}\s*', '', clean_text)
-    clean_text = re.sub(r'\*\s*', '• ', clean_text)
-
-    # Create a comprehensive mapping of titles to URLs
-    title_to_url = create_title_url_mapping(context_docs)
-
-    # FIRST: Handle any markdown-style links that might have been generated
-    # Convert [source: title](url) to just [source: title]
-    clean_text = re.sub(r'\[source: ([^\]]+)\]\([^)]+\)', r'[source: \1]', clean_text)
-
+    # Process the entire response
+    processed_text = replace_with_links(response_text)
+    
     # Split into sections
-    sections = re.split(r'\n\s*(?=Overview:|Key Information:|Legislation or ATO Reference:|Analysis:|Conclusion:|Confidence Level:|References:)', clean_text)
+    sections = re.split(r'\n\s*(?=Overview:|Key Information:|Legislation or ATO Reference:|Analysis:|Conclusion:|Confidence Level:|References:)', processed_text)
     
     html_output = '<div class="file-note-header">📝 File Note</div>'
     
-    # Process each section
     for section in sections:
         section = section.strip()
         if not section:
             continue
         
-        # Extract section title and content
         section_parts = section.split(':', 1)
         if len(section_parts) < 2:
             continue
@@ -507,94 +541,35 @@ def format_response_as_html(response_text: str, context_docs: List[Dict]) -> str
         section_title = section_parts[0].strip()
         section_content = section_parts[1].strip()
         
-        # Set icon based on section title
-        if 'overview' in section_title.lower():
-            icon = "📋"
-        elif 'key information' in section_title.lower():
-            icon = "📊"
-        elif 'legislation' in section_title.lower() or 'ato reference' in section_title.lower():
-            icon = "⚖️"
-        elif 'analysis' in section_title.lower():
-            icon = "🔍"
-        elif 'conclusion' in section_title.lower():
-            icon = "✅"
-        elif 'confidence' in section_title.lower():
-            icon = "🔒"
-        elif 'references' in section_title.lower():
-            icon = "📚"
-        else:
-            icon = "ℹ️"
+        # Set icon
+        icon_map = {
+            'overview': "📋",
+            'key information': "📊",
+            'legislation': "⚖️",
+            'analysis': "🔍",
+            'conclusion': "✅",
+            'confidence': "🔒"
+        }
+        
+        icon = next((v for k, v in icon_map.items() if k in section_title.lower()), "ℹ️")
         
         html_output += f'<div class="section-container"><div class="section-header">{icon} {section_title}</div>'
         
-        # Handle confidence level differently
         if 'confidence level' in section_title.lower():
             confidence_text = section_content.lower()
-            
-            if 'high' in confidence_text:
-                badge_class = "confidence-high"
-            elif 'moderate' in confidence_text:
-                badge_class = "confidence-moderate"
-            else:
-                badge_class = "confidence-low"
-            
+            badge_class = "confidence-high" if 'high' in confidence_text else "confidence-moderate" if 'moderate' in confidence_text else "confidence-low"
             html_output += f'<div class="confidence-badge {badge_class}">{section_content}</div>'
-        # Handle references section differently
-        elif 'references' in section_title.lower():
-            # Skip this section as we'll generate our own references section
-            pass
         else:
-            # Process content as bullet points or paragraphs
             lines = section_content.split('\n')
             for line in lines:
                 line = line.strip()
-                if line and line.startswith('•'):
-                    # Process the line to convert [source: title] to clickable links
-                    processed_line = process_source_references(line, title_to_url)
-                    html_output += f'<div class="key-point">{processed_line}</div>'
-                elif line:
-                    # Process regular paragraphs for source references too
-                    processed_line = process_source_references(line, title_to_url)
-                    html_output += f'<div class="content-text">{processed_line}</div>'
+                if line:
+                    if line.startswith('•'):
+                        html_output += f'<div class="key-point">{line}</div>'
+                    else:
+                        html_output += f'<div class="content-text">{line}</div>'
         
         html_output += '</div>'
-    
-    # Add references section
-    legislative_sources, web_sources = categorize_sources(context_docs)
-    
-    html_output += '<div class="section-container"><div class="section-header">📚 References</div>'
-    
-    # Display web sources with URLs
-    seen_sources = set()
-    for source in web_sources:
-        source_key = f"{source['source']}_{source['title']}"
-        if source_key in seen_sources:
-            continue
-        seen_sources.add(source_key)
-        
-        if source['url']:
-            html_output += f'<div class="key-point">• <a href="{source["url"]}" target="_blank" class="source-link">{source["title"]}</a></div>'
-        else:
-            html_output += f'<div class="key-point">• {source["title"]}</div>'
-    
-    # Display legislative sources
-    for ref in legislative_sources:
-        ref_key = f"{ref['source']}_{ref['title']}"
-        if ref_key in seen_sources:
-            continue
-        seen_sources.add(ref_key)
-        
-        html_output += f'<div class="key-point">• {ref["title"]} ({ref["source"]})</div>'
-    
-    html_output += '</div>'
-    
-    # Add disclaimer
-    html_output += """
-    <div class="disclaimer">
-    <strong>⚠️ Important Notice:</strong> This information is for general guidance only and is based on current ATO documentation. 
-    Tax laws are complex and individual circumstances vary. For personalized advice, please consult a registered tax agent.
-    </div>
-    """
     
     return html_output
 
@@ -607,22 +582,6 @@ async def process_query(query: str, collection, openai_client):
         <div class="section-header">⚠️ Out of Scope Query</div>
         <div class="content-text">
         <p>Koala Tax Assistant can only help with Australian taxation and ATO matters.</p>
-        <p><strong>I can help with:</strong></p>
-        <div class="key-point">• Australian tax laws and regulations</div>
-        <div class="key-point">• Tax returns and deductions</div>
-        <div class="key-point">• GST and income tax questions</div>
-        <div class="key-point">• Superannuation tax matters</div>
-        <div class="key-point">• Business tax obligations</div>
-        <div class="key-point">• Tax agent services</div>
-        </div>
-        <div class="content-text">
-        <p><strong>I cannot help with:</strong></p>
-        <div class="key-point">• Financial advice or investment recommendations</div>
-        <div class="key-point">• Non-Australian tax matters</div>
-        <div class="key-point">• General financial planning</div>
-        <div class="key-point">• Personal financial decisions</div>
-        </div>
-        <div class="content-text">
         <p>Please ask a question about Australian taxation!</p>
         </div>
         </div>
@@ -639,16 +598,12 @@ async def process_query(query: str, collection, openai_client):
             <div class="section-header">❌ No Information Found</div>
             <div class="content-text">
             <p>No relevant information found in ATO documentation</p>
-            <p><strong>Suggestions:</strong></p>
-            <div class="key-point">• Try rephrasing your question with specific tax terms</div>
-            <div class="key-point">• Contact the ATO directly on <strong>13 28 61</strong></div>
-            <div class="key-point">• Visit <a href="https://www.ato.gov.au" target="_blank" class="source-link">ato.gov.au</a> for comprehensive information</div>
             </div>
             </div>
             """
 
         response_text = await generate_response(openai_client, query, relevant_docs)
-        return format_response_as_html(response_text, relevant_docs)
+        return format_response_with_links(response_text, relevant_docs)
 
     except Exception as e:
         logger.error(f"Query processing error: {e}")
@@ -657,7 +612,6 @@ async def process_query(query: str, collection, openai_client):
         <div class="section-header">⚠️ Error</div>
         <div class="content-text">
         <p>An error occurred while processing your query: {str(e)}</p>
-        <p>Please try again or contact the ATO directly for assistance.</p>
         </div>
         </div>
         """
@@ -665,13 +619,6 @@ async def process_query(query: str, collection, openai_client):
 def main():
     st.markdown("# 🐨 Koala Tax Assistant")
     st.markdown("*Your professional guide to Australian taxation law and ATO guidance*")
-    st.markdown(
-        """
-        **Important Note:** This is a RAG (Retrieval Augmented Generation) application developed using a limited dataset
-        sourced from the ATO website and selected Australian tax legislation (including relevant sections of the Corporations Act).
-        As such, it may not provide exhaustive or fully comprehensive answers, nor should it be considered a substitute for professional
-        tax advice. This tool may also not perform accurate calculations. It is currently a proof of concept.
-        """)
 
     collection, openai_client = init_connections()
     if not collection or not openai_client:
@@ -681,79 +628,27 @@ def main():
     if "messages" not in st.session_state:
         st.session_state.messages = []
 
-    if not st.session_state.messages:
-        st.markdown("### 💡 Popular Tax Questions")
-
-        col1, col2 = st.columns(2)
-
-        with col1:
-            if st.button("📊 Individual tax rates 2025-26", use_container_width=True):
-                st.session_state.sample_query = "What are the individual income tax rates for 2025-26?"
-                st.rerun()
-            if st.button("🏢 GST registration requirements", use_container_width=True):
-                st.session_state.sample_query = "What are the GST registration requirements for businesses?"
-                st.rerun()
-
-        with col2:
-            if st.button("🏠 Capital gains tax on property", use_container_width=True):
-                st.session_state.sample_query = "How is capital gains tax calculated on investment property?"
-                st.rerun()
-            if st.button("🏢 Small Business CGT Concessions", use_container_width=True):
-                st.session_state.sample_query = "What are the eligibility criteria for the small business CGT concessions in Australia for 2025-26, and how do they reduce capital gains?"
-                st.rerun()
-
-    # Display chat history (excluding the current query if it exists)
-    for i, message in enumerate(st.session_state.messages):
+    # Display chat history
+    for message in st.session_state.messages:
         if message["role"] == "user":
             with st.chat_message("user"):
                 st.markdown(f'<div class="chat-message user-message">{message["content"]}</div>', unsafe_allow_html=True)
         else:
             with st.chat_message("assistant", avatar="🐨"):
-                if message.get("is_html", False):
-                    st.markdown(f'<div class="chat-message assistant-message">{message["content"]}</div>', unsafe_allow_html=True)
-                else:
-                    st.markdown(f'<div class="chat-message assistant-message">{message["content"]}</div>', unsafe_allow_html=True)
+                st.markdown(f'<div class="chat-message assistant-message">{message["content"]}</div>', unsafe_allow_html=True)
 
-    # Process sample query if it exists
-    if hasattr(st.session_state, 'sample_query'):
-        query = st.session_state.sample_query
-        del st.session_state.sample_query
-
-        # Add user message to chat history
-        st.session_state.messages.append({"role": "user", "content": query})
-
-        # Display user message
-        with st.chat_message("user"):
-            st.markdown(f'<div class="chat-message user-message">{query}</div>', unsafe_allow_html=True)
-
-        # Process and display assistant response
-        with st.chat_message("assistant", avatar="🐨"):
-            with st.spinner("🔍 Researching tax information..."):
-                response_html = asyncio.run(process_query(query, collection, openai_client))
-                st.markdown(f'<div class="chat-message assistant-message">{response_html}</div>', unsafe_allow_html=True)
-
-        # Add assistant response to chat history
-        st.session_state.messages.append({"role": "assistant", "content": response_html, "is_html": True})
-
-    # Chat input for new queries
+    # Chat input
     if prompt := st.chat_input("Ask me about Australian taxation..."):
-        # Add user message to chat history
         st.session_state.messages.append({"role": "user", "content": prompt})
-
-        # Display user message
+        
         with st.chat_message("user"):
             st.markdown(f'<div class="chat-message user-message">{prompt}</div>', unsafe_allow_html=True)
-
-        # Process and display assistant response
+        
         with st.chat_message("assistant", avatar="🐨"):
             with st.spinner("🔍 Researching tax information..."):
                 response_html = asyncio.run(process_query(prompt, collection, openai_client))
-                st.markdown(f'<div class="chat-message assistant-message">{response_html}</div>', unsafe_allow_html=True)
-
-        # Add assistant response to chat history
-        st.session_state.messages.append({"role": "assistant", "content": response_html, "is_html": True})
+                st.markdown(response_html, unsafe_allow_html=True)
+                st.session_state.messages.append({"role": "assistant", "content": response_html})
 
 if __name__ == "__main__":
     main()
-
-print("Koala Tax Assistant application code created successfully!")
