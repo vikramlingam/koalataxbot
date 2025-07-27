@@ -374,20 +374,19 @@ CRITICAL INSTRUCTIONS:
 
 def format_response_as_html(response_text: str, context_docs: List[Dict]) -> str:
     """
-    Formats the AI's response text into structured HTML for display.
-    This function now correctly converts Markdown links to HTML `<a>` tags.
+    Formats the AI's response text into structured HTML for display,
+    preserving the original structure and correctly handling links.
     """
-    # --- MAIN FIX ---
-    # Convert all Markdown-style links `[Text](URL)` to HTML `<a>` tags.
-    # This single line fixes the linking issue.
+    # --- FIX APPLIED HERE ---
+    # First, convert all Markdown-style links `[Text](URL)` to HTML `<a>` tags.
+    # This is done before any other processing to ensure all links are correctly formatted.
     processed_text = re.sub(r'\[([^\]]+)\]\((https?://[^\s\)]+)\)', r'<a href="\2" target="_blank" class="source-link">\1</a>', response_text)
     
-    # Clean up other markdown for consistent styling
+    # Now, we resume with the original formatting logic to preserve the layout.
     clean_text = re.sub(r'\*\*(.*?)\*\*', r'<strong>\1</strong>', processed_text)
     clean_text = re.sub(r'#{1,6}\s*', '', clean_text)
-    clean_text = re.sub(r'^\*\s*', '• ', clean_text, flags=re.MULTILINE)
-
-    # Split the response into sections based on headers
+    
+    # Split the response into sections based on the headers, as per the original code.
     sections = re.split(r'\n\s*(?=Overview:|Key Information:|Legislation or ATO Reference:|Analysis:|Conclusion:|Confidence Level:|References:)', clean_text)
     
     html_output = '<div class="file-note-header">📝 File Note</div>'
@@ -408,7 +407,7 @@ def format_response_as_html(response_text: str, context_docs: List[Dict]) -> str
             'overview': "📋", 'key information': "📊", 'legislation or ato reference': "⚖️",
             'analysis': "🔍", 'conclusion': "✅", 'confidence level': "🔒", 'references': "📚"
         }
-        icon = icon_map.get(section_title.lower(), "ℹ️")
+        icon = icon_map.get(section_title.lower().replace(' or ', ' '), "ℹ️")
         
         html_output += f'<div class="section-container"><div class="section-header">{icon} {section_title}</div>'
         
@@ -419,26 +418,34 @@ def format_response_as_html(response_text: str, context_docs: List[Dict]) -> str
             elif 'low' in confidence_text: badge_class = "confidence-low"
             html_output += f'<div class="confidence-badge {badge_class}">{section_content}</div>'
         
-        elif 'references' not in section_title.lower():
+        elif 'references' in section_title.lower():
+            # The AI might generate its own reference list; we will ignore it
+            # and build our own clean one at the end.
+            pass
+        else:
+            # Process content line by line, preserving paragraphs and bullet points.
             lines = section_content.split('\n')
             for line in lines:
                 line = line.strip()
-                # The line now contains pre-formatted <a> tags, so no extra processing is needed.
-                if line.startswith('•'):
-                    html_output += f'<div class="key-point">{line}</div>'
-                elif line:
+                if not line: continue
+                # The line now contains pre-formatted <a> tags where applicable.
+                if line.startswith('* ') or line.startswith('• '):
+                    # Strip the bullet character for consistent styling
+                    line = re.sub(r'^[*\•]\s*', '', line)
+                    html_output += f'<div class="key-point">• {line}</div>'
+                else:
                     html_output += f'<div class="content-text">{line}</div>'
         
         html_output += '</div>'
     
-    # Add a separate, clean references section at the end
+    # Add a separate, clean references section at the end.
     legislative_sources, web_sources = categorize_sources(context_docs)
     if legislative_sources or web_sources:
         html_output += '<div class="section-container"><div class="section-header">📚 References</div>'
         seen_sources = set()
         for source in web_sources:
             source_key = source['url'] or source['title']
-            if source_key in seen_sources: continue
+            if not source_key or source_key in seen_sources: continue
             seen_sources.add(source_key)
             if source['url']:
                 html_output += f'<div class="key-point">• <a href="{source["url"]}" target="_blank" class="source-link">{source["title"]}</a></div>'
@@ -447,7 +454,7 @@ def format_response_as_html(response_text: str, context_docs: List[Dict]) -> str
         
         for ref in legislative_sources:
             ref_key = ref['source']
-            if ref_key in seen_sources: continue
+            if not ref_key or ref_key in seen_sources: continue
             seen_sources.add(ref_key)
             html_output += f'<div class="key-point">• {ref["title"]} ({ref["source"]})</div>'
         html_output += '</div>'
@@ -543,31 +550,50 @@ def main():
             with col:
                 for button_text in buttons:
                     if st.button(button_text, use_container_width=True):
-                        st.session_state.current_query = sample_questions[button_text]
+                        # Using the original rerun logic
+                        st.session_state.sample_query = sample_questions[button_text]
                         st.rerun()
 
     # Display chat history
     for message in st.session_state.messages:
         with st.chat_message(message["role"], avatar="🐨" if message["role"] == "assistant" else "user"):
+            # The 'is_html' flag is no longer needed as we always process for HTML
             st.markdown(f'<div class="chat-message {"assistant-message" if message["role"] == "assistant" else "user-message"}">{message["content"]}</div>', unsafe_allow_html=True)
 
-    # Process a new query (from either button click or chat input)
-    query_to_process = None
-    if "current_query" in st.session_state:
-        query_to_process = st.session_state.pop("current_query")
-    elif prompt := st.chat_input("Ask me about Australian taxation..."):
-        query_to_process = prompt
-
-    if query_to_process:
-        st.session_state.messages.append({"role": "user", "content": query_to_process})
+    # Process sample query if it exists (original logic)
+    if "sample_query" in st.session_state and st.session_state.sample_query:
+        query = st.session_state.pop("sample_query")
+        st.session_state.messages.append({"role": "user", "content": query})
         with st.chat_message("user"):
-            st.markdown(f'<div class="chat-message user-message">{query_to_process}</div>', unsafe_allow_html=True)
+            st.markdown(f'<div class="chat-message user-message">{query}</div>', unsafe_allow_html=True)
 
         with st.chat_message("assistant", avatar="🐨"):
             with st.spinner("🔍 Researching tax information..."):
-                response_html = asyncio.run(process_query(query_to_process, collection, openai_client))
+                response_html = asyncio.run(process_query(query, collection, openai_client))
                 st.markdown(f'<div class="chat-message assistant-message">{response_html}</div>', unsafe_allow_html=True)
                 st.session_state.messages.append({"role": "assistant", "content": response_html})
+        # Rerun to clear the state and wait for next input
+        st.rerun()
+
+    # Chat input for new queries
+    if prompt := st.chat_input("Ask me about Australian taxation..."):
+        st.session_state.messages.append({"role": "user", "content": prompt})
+        # Rerunning will display the new message and process the response in the next cycle
+        st.rerun()
 
 if __name__ == "__main__":
+    # This block handles the case where a new message was added and the app was rerun
+    if "messages" in st.session_state and st.session_state.messages:
+        last_message = st.session_state.messages[-1]
+        # Check if the last message is from the user and hasn't been responded to yet
+        if last_message["role"] == "user" and len(st.session_state.messages) % 2 != 0:
+            collection, openai_client = init_connections()
+            if collection and openai_client:
+                query = last_message["content"]
+                with st.chat_message("assistant", avatar="🐨"):
+                    with st.spinner("🔍 Researching tax information..."):
+                        response_html = asyncio.run(process_query(query, collection, openai_client))
+                        st.markdown(f'<div class="chat-message assistant-message">{response_html}</div>', unsafe_allow_html=True)
+                        st.session_state.messages.append({"role": "assistant", "content": response_html})
+
     main()
