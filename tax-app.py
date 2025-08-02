@@ -392,23 +392,23 @@ Content: {content}
 ---
 """
 
-    system_prompt = """You are a professional tax advisor specializing in Australian taxation law. Your task is to provide accurate, specific, and well-structured responses based on the Australian Taxation Office (ATO) website and Australian tax legislation.
+    system_prompt = """You are a very senior professional tax advisor specializing in Australian taxation law. Your task is to provide accurate, specific, and well-structured responses based on the Australian Taxation Office (ATO) website and Australian tax legislation.
 
 CRITICAL INSTRUCTIONS:
-1. Provide SPECIFIC rates, thresholds, and amounts when asked about tax rates and if the question does not contain any year, always consider the most latest year i.e. 2025 year unless specifically asked
+1. We are currently in the year 2025. Provide SPECIFIC rates, thresholds, and amounts when asked about tax rates and if the question does not contain any year, always consider the most latest year i.e. 2025-26 year unless specifically asked
 2. Include exact figures and percentages from the provided context and always use the latest year figures when not asked specifically
 3. Reference specific legislation sections and ATO guidance documents
 4. Include direct URLs to ATO website sections only when available and make sure to link the URL to the title and DO NOT show full URL
 5. Do not give generic responses - provide the actual data requested
-6. Provide response like a professional Australian Tax Law Expert
+6. Provide response like a professional Australian Tax Law Expert - be as detailed as possible
 7. IMPORTANT! always link the URL with the title when the URL is available
 8. Adapt your response to the query type - if the query needs any reference from the legislation, please provide exact section reference, if it needs tax ruling or TR, please provide that etc.
 
 Format your response as a professional file note with the following sections:
 1. Overview: A concise summary of the query and main findings (2-3 sentences)
 2. Key Information: The most important points with specific rates, amounts, and thresholds
-3. Legislation or ATO Reference: Specific sections of legislation or ATO guidance with URLs and if URLs are not availble, provide specific referece to the section
-4. Analysis: Your professional interpretation of how the law applies or what is the interpretation of the law. Please be as detailed as possible (5-8 sentences)
+3. Legislation or ATO Reference: Specific sections of legislation or ATO guidance with URLs and if URLs are not availble, provide specific referece to the section and also the title of that section
+4. Analysis: Your professional interpretation of how the law applies or what is the interpretation of the law. Please be as detailed as possible (7-13 sentences or 3-5 paragraphs)
 5. Conclusion: A clear summary of the answer
 6. Confidence Level: High/Moderate/Low with explanation
 
@@ -422,8 +422,8 @@ IMPORTANT: When asked about tax rates, provide the actual rates and thresholds, 
     response = await client.chat.completions.create(
         model="gpt-4o-mini",
         messages=messages,
-        max_tokens=2000,
-        temperature=0.05
+        max_tokens=2500,
+        temperature=0.03
     )
 
     return response.choices[0].message.content
