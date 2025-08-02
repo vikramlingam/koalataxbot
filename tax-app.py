@@ -397,7 +397,7 @@ Content: {content}
 CRITICAL INSTRUCTIONS:
 1. We are currently in the year 2025. Provide SPECIFIC rates, thresholds, and amounts when asked about tax rates and if the question does not contain any year, always consider the most latest year i.e. 2025-26 year unless specifically asked
 2. Include exact figures and percentages from the provided context and always use the latest year figures when not asked specifically
-3. Reference specific legislation sections and ATO guidance documents - where there is a requirement of legislative sections, try to proivde top 5 appropriate section references
+3. Reference specific legislation sections and ATO guidance documents - where there is a requirement of legislative sections, try to proivde top 5 appropriate section references but NOT ATO WEBSITE references
 4. Include direct URLs to ATO website sections only when available and make sure to link the URL to the title and DO NOT show full URL
 5. Do not give generic responses - provide the actual data requested
 6. Provide response like a professional Australian Tax Law Expert - be as detailed as possible
