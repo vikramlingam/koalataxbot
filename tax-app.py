@@ -423,6 +423,7 @@ Follow these rules:
    - 🧠 Confidence Assessment: High/Moderate/Low + reason
 
 4. PRIORITIZE:
+   - Always retrive the most latest year when the user did not specify any Year
    - Accuracy over brevity
    - Specificity over generality
    - Utility to a legal/tax professional over readability to a layperson
