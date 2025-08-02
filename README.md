@@ -48,7 +48,7 @@ Follow these steps to set up and run the Koala Tax Assistant locally or for depl
 
 ### 1. Clone the Repository
 
-git clone https://github.com/your_username/koalataxbot.git
+git clone https://github.com/vikramlingam/koalataxbot.git
 cd koalataxbot
 
 
