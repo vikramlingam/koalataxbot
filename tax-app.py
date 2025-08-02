@@ -257,7 +257,7 @@ Return only the enhanced query, no explanation."""
 
 async def check_query_intent(client: AsyncOpenAI, query: str) -> bool:
     tax_keywords = [
-        "tax", "ato", "gst", "income", "deduction", "superannuation", "super", "pillar 2", "pillar two", "IDS", "GloBE", "BEPS",
+        "tax", "ato", "gst", "income", "deduction", "superannuation", "super", "pillar 2", "pillar two", "IDS", "GloBE", "BEPS", "BEPS 2.0"
         "capital gains", "cgt", "fringe benefits", "fbt", "business", "depreciation", "amortisation", "thin capitalisation", "losses",
         "dividend", "offset", "rebate", "lodgment", "return", "assessment", "exemption", "deductions", "audit", "individual",
         "withholding", "payg", "medicare", "levy", "concession", "allowance", "expense", "useful life",
