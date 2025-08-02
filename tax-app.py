@@ -411,7 +411,7 @@ Format your response as a professional file note with the following sections:
 4. Analysis: Your professional interpretation of how the law applies or what is the interpretation of the law. Please be as detailed as possible (7-13 sentences or 3-5 paragraphs)
 5. Conclusion: A clear summary of the answer
 6. Confidence Level: High/Moderate/Low with explanation
-7. References: If the reference has no URL, make sure to include the full title as it is in references
+7. References: If the reference has no URL, make sure to include the full title and Source as it is in references
 
 IMPORTANT: When asked about tax rates, provide the actual rates and thresholds, not general statements about where to find them."""
 
