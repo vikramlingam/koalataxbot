@@ -408,7 +408,7 @@ Format your response as a professional file note with the following sections:
 1. Overview: A concise summary of the query and main findings (2-3 sentences)
 2. Key Information: The most important points with specific rates, amounts, and thresholds
 3. Legislation or ATO Reference: Specific sections of legislation or ATO guidance with URLs and if URLs are not availble, provide specific referece to the section
-4. Analysis: Your professional interpretation of how the law applies or what is the interpretation of the law
+4. Analysis: Your professional interpretation of how the law applies or what is the interpretation of the law. Please be as detailed as possible (5-8 sentences)
 5. Conclusion: A clear summary of the answer
 6. Confidence Level: High/Moderate/Low with explanation
 
